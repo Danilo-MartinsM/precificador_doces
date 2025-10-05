@@ -3,71 +3,99 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Precificador - UI</title>
+  <title>Precificador Pura Doçura</title>
   <style>
     :root{
       --brown:#6b3e26;
       --gold:#d4af37;
+      --light-gold:#f3e9d2;
       --white:#fff;
-      --muted:#f6f2ef;
+      --muted:#fcf9f7;
     }
 
     body{
-      font-family:Inter,Arial,sans-serif;
+      font-family: 'Inter', Arial, sans-serif;
       margin:0;
-      background:#fffaf6;
+      background:var(--muted);
       color:#3a2b26;
-      padding:18px;
+      padding:0;
+    }
+
+    header{
+      background:var(--brown);
+      color:var(--white);
+      padding:14px 20px;
+      text-align:center;
+      font-size:1.4rem;
+      font-weight:600;
+      letter-spacing:0.5px;
     }
 
     .wrap{
-      max-width:1100px;
-      margin:0 auto;
+      max-width:1200px;
+      margin:20px auto;
       display:grid;
-      grid-template-columns:1fr 360px;
-      gap:18px;
+      grid-template-columns:1fr 340px;
+      gap:20px;
+      padding:0 16px;
     }
 
     .card{
       background:var(--white);
-      padding:14px;
-      border-radius:10px;
-      box-shadow:0 8px 20px rgba(0,0,0,0.04);
+      padding:16px 18px;
+      border-radius:12px;
+      box-shadow:0 4px 16px rgba(0,0,0,0.06);
     }
 
-    h2{
-      margin:0 0 10px 0;
+    h2, h3{
+      margin:0 0 12px 0;
       color:var(--brown);
-      font-size:1.3rem;
+      font-size:1.25rem;
     }
 
     label{
       display:block;
-      font-size:13px;
-      margin:6px 0;
+      font-size:14px;
+      margin:8px 0 4px;
+      color:#5a463a;
     }
 
     input,select{
-      padding:8px;
+      padding:9px 10px;
       border-radius:8px;
-      border:1px solid #efe2da;
+      border:1px solid #e7ded8;
       width:100%;
       font-size:14px;
+      box-sizing:border-box;
     }
 
     .btn{
       background:var(--brown);
       color:var(--white);
-      padding:8px 10px;
+      padding:9px 14px;
       border-radius:8px;
       border:none;
       cursor:pointer;
       font-size:14px;
+      transition:background 0.2s, transform 0.1s;
     }
 
     .btn:hover{
-      opacity:0.9;
+      background:#5a311c;
+      transform:scale(1.02);
     }
+
+    .small{
+      background:#f5e9e2;
+      border:1px solid #dec5b5;
+      color:#543a2d;
+      padding:6px 8px;
+      border-radius:6px;
+      font-size:13px;
+      cursor:pointer;
+    }
+
+    .small:hover{ background:#f1e1d6; }
 
     table{
       width:100%;
@@ -77,87 +105,64 @@
     }
 
     th,td{
-      padding:8px;
-      border-bottom:1px dashed #f0e6e0;
+      padding:8px 10px;
+      border-bottom:1px dashed #eee1da;
       text-align:left;
     }
 
-    .small{
-      font-size:13px;
-      padding:6px 8px;
+    th{
+      background:#faf6f4;
+      color:#5c4638;
+      font-weight:600;
     }
 
     .inline{
       display:flex;
-      gap:8px;
+      gap:10px;
     }
 
-    /* Responsividade */
+    hr{
+      border:none;
+      border-top:1px solid #f0e6df;
+      margin:14px 0;
+    }
+
+    /* info de custo */
+    .info{
+      margin-top:14px;
+      font-size:15px;
+      color:#3a2b26;
+    }
+
+    .info span{
+      font-weight:600;
+      color:var(--brown);
+    }
+
+    /* Responsivo */
     @media(max-width:980px){
-      .wrap{
-        grid-template-columns:1fr;
-      }
+      .wrap{ grid-template-columns:1fr; }
     }
 
     @media(max-width:680px){
-      body{
-        padding:10px;
-      }
-
-      h2{
-        font-size:1.2rem;
-      }
-
-      .inline{
-        flex-direction:column;
-        gap:4px;
-      }
-
-      input, select, .btn{
-        font-size:15px;
-      }
-
-      /* inputs e botões empilhados */
-      main .inline, main div[style*="display:flex"]{
-        flex-direction:column !important;
-        align-items:stretch !important;
-      }
-
-      table{
-        display:block;
-        overflow-x:auto;
-        white-space:nowrap;
-        font-size:13px;
-      }
-
-      th,td{
-        padding:6px;
-      }
-
-      .btn, .small{
-        width:100%;
-      }
-
-      aside.card{
-        order:2;
-      }
-
-      main.card{
-        order:1;
-      }
+      header{ font-size:1.2rem; padding:12px; }
+      .inline{ flex-direction:column; gap:6px; }
+      input, select, .btn, .small{ font-size:15px; width:100%; }
+      table{ display:block; overflow-x:auto; white-space:nowrap; font-size:13px; }
+      th,td{ padding:7px; }
     }
 
     @media(max-width:420px){
       h2{ font-size:1.1rem; }
       label{ font-size:12px; }
-      input,select{ font-size:13px; }
-      .btn{ font-size:13px; padding:7px; }
-      table{ font-size:12px; }
     }
   </style>
 </head>
 <body>
+  <header>🍫 Precificador Pura Doçura</header>
+
   <div class="wrap">
+    <!-- ===== Receitas ===== -->
     <main class="card">
       <h2>Nova Receita</h2>
 
@@ -168,7 +173,7 @@
         <option>Doces</option>
       </select>
 
-      <label>Nome</label>
+      <label>Nome da Receita</label>
       <input id="nomeDoce" type="text" placeholder="Ex: Bolo de Cenoura">
 
       <div class="inline" style="margin-top:8px;align-items:end">
@@ -178,7 +183,7 @@
         </div>
         <div style="flex:1">
           <label>Quantidade</label>
-          <input id="qtdIng" type="number" step="any">
+          <input id="qtdIng" type="number" step="any" placeholder="Ex: 200">
         </div>
         <div style="flex:1">
           <label>Unidade</label>
@@ -191,208 +196,223 @@
         <button class="btn" id="addIng">Adicionar</button>
       </div>
 
-      <div style="overflow-x:auto;">
-        <table id="tbl">
-          <thead><tr><th>Ingrediente</th><th>Qtd</th><th>Unidade</th><th>Custo</th><th></th></tr></thead>
-          <tbody></tbody>
-        </table>
+      <table id="tbl">
+        <thead><tr><th>Ingrediente</th><th>Qtd</th><th>Unid.</th><th>Custo</th><th></th></tr></thead>
+        <tbody></tbody>
+      </table>
+
+      <div class="inline" style="margin-top:14px;align-items:center">
+        <div style="flex:1">
+          <label>Embalagem (R$)</label><input id="emb" type="number" step="any" value="0">
+        </div>
+        <div style="flex:1">
+          <label>Margem (%)</label><input id="marg" type="number" step="any" value="50">
+        </div>
+        <div>
+          <button class="btn" id="btnSaveRecipe">Salvar Receita</button>
+        </div>
       </div>
 
-      <div class="inline" style="margin-top:10px;align-items:center">
-        <div style="flex:1"><label>Embalagem R$</label><input id="emb" type="number" step="any" value="0"></div>
-        <div style="flex:1"><label>Margem %</label><input id="marg" type="number" step="any" value="50"></div>
-        <div><button class="btn" id="btnSaveRecipe">Salvar receita</button></div>
-      </div>
-
-      <div style="margin-top:12px">
-        <div><strong>Custo total: </strong><span id="cost">R$ 0,00</span></div>
-        <div><strong>Preço sugerido: </strong><span id="price">R$ 0,00</span></div>
+      <div class="info">
+        <div><strong>Custo total:</strong> <span id="cost">R$ 0,00</span></div>
+        <div><strong>Preço sugerido:</strong> <span id="price">R$ 0,00</span></div>
       </div>
     </main>
 
+    <!-- ===== Ingredientes ===== -->
     <aside class="card">
       <h2>Ingredientes</h2>
       <div id="ingList">Carregando...</div>
 
-      <hr style="margin:12px 0">
+      <hr>
 
       <h3>Adicionar / Editar</h3>
-      <label>Nome</label><input id="formName" type="text">
-      <label>Quantidade base (ex: 100)</label><input id="formAmount" type="number" step="any" value="100">
+      <label>Nome</label><input id="formName" type="text" placeholder="Ex: Açúcar refinado">
+      <label>Qtd. base</label><input id="formAmount" type="number" step="any" value="100">
       <label>Unidade</label>
       <select id="formUnit"><option value="g">g</option><option value="ml">ml</option><option value="unit">unidade</option></select>
-      <label>Preço para quantidade base (R$)</label><input id="formPrice" type="number" step="any" value="1.00">
-      <label>Densidade (g/ml ou g por unidade)</label><input id="formDensity" type="number" step="any" value="1">
+      <label>Preço p/ qtd base (R$)</label><input id="formPrice" type="number" step="any" value="1.00">
+      <label>Densidade (g/ml ou g/un)</label><input id="formDensity" type="number" step="any" value="1">
 
       <div class="inline" style="margin-top:8px">
-        <button class="btn" id="btnAddIngDb">Salvar ingrediente</button>
+        <button class="btn" id="btnAddIngDb">Salvar Ingrediente</button>
         <button class="small" id="btnClearForm">Limpar</button>
       </div>
 
-      <div style="margin-top:8px;color:#6b4b42;font-size:13px">
-        Clique num item para carregar no formulário e editar.
-      </div>
+      <p style="margin-top:10px;color:#6b4b42;font-size:13px">
+        Toque num item para editar ou excluir.
+      </p>
     </aside>
   </div>
 
-<script>
-  /* JS original mantido exatamente igual */
-  const API = "http://localhost:8000";
-  let catalog = [];
-  let recipe = [];
-  async function loadIngredients(){
-    const res = await fetch(API + "/ingredientes");
-    catalog = await res.json();
-    renderCatalog();
-  }
-  function renderCatalog(){
-    const sel = document.getElementById("ingredSelect");
-    sel.innerHTML = "";
-    const listDiv = document.getElementById("ingList");
-    listDiv.innerHTML = "";
-    catalog.forEach(i=>{
-      const opt = document.createElement("option");
-      opt.value = i.id; opt.textContent = i.nome;
-      sel.appendChild(opt);
-      const div = document.createElement("div");
-      div.style.display="flex";
-      div.style.justifyContent="space-between";
-      div.style.marginBottom="6px";
-      div.innerHTML = `<div style="flex:1">${i.nome} <small style="color:#6b4b42">(${i.amount}${i.unit} → R$ ${Number(i.price).toFixed(2)})</small></div>`;
-      const right = document.createElement("div");
-      right.style.display="flex";
-      right.style.gap="6px";
-      const btnEdit = document.createElement("button");
-      btnEdit.textContent="Editar"; btnEdit.className="small";
-      btnEdit.onclick = ()=> loadIntoForm(i);
-      const btnDel = document.createElement("button");
-      btnDel.textContent="Excluir"; btnDel.className="small";
-      btnDel.onclick = ()=> removeIngredient(i.id);
-      right.appendChild(btnEdit); right.appendChild(btnDel);
-      div.appendChild(right);
-      listDiv.appendChild(div);
-    });
-  }
-  function loadIntoForm(i){
-    formName.value=i.nome;
-    formAmount.value=i.amount;
-    formUnit.value=i.unit;
-    formPrice.value=i.price;
-    formDensity.value=i.density;
-    btnAddIngDb.dataset.editing=i.id;
-    btnAddIngDb.textContent="Atualizar";
-  }
-  btnClearForm.addEventListener("click", ()=>clearForm());
-  function clearForm(){
-    formName.value=""; formAmount.value=100; formUnit.value="g"; formPrice.value=1.00; formDensity.value=1;
-    delete btnAddIngDb.dataset.editing;
-    btnAddIngDb.textContent="Salvar ingrediente";
-  }
-  async function removeIngredient(id){
-    if(!confirm("Remover ingrediente do banco?")) return;
-    await fetch(API+"/ingredientes/"+id,{method:"DELETE"});
-    await loadIngredients(); renderRecipeTable();
-  }
-  btnAddIngDb.addEventListener("click", async ()=>{
-    const name=formName.value.trim();
-    const amount=Number(formAmount.value)||100;
-    const unit=formUnit.value;
-    const price=Number(formPrice.value)||0;
-    const density=Number(formDensity.value)||1;
-    if(!name){alert("Nome é obrigatório");return;}
-    const payload={nome:name,unit,amount,price,density};
-    const editing=btnAddIngDb.dataset.editing;
-    if(editing){
-      await fetch(API+"/ingredientes/"+editing,{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
-    } else {
-      await fetch(API+"/ingredientes",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
+  <!-- === JS igual ao seu, sem mudanças na lógica === -->
+  <script>
+    const API = "http://localhost:8000";
+    let catalog = [], recipe = [];
+
+    async function loadIngredients(){
+      const res = await fetch(API + "/ingredientes");
+      catalog = await res.json();
+      renderCatalog();
     }
-    clearForm(); await loadIngredients();
-  });
-  addIng.addEventListener("click", ()=>{
-    const sel=document.getElementById("ingredSelect");
-    const id=Number(sel.value);
-    const q=Number(qtdIng.value)||0;
-    const unit=unitIng.value;
-    if(!id){alert("Escolha ingrediente");return;}
-    if(q<=0&&unit!=="unit"){alert("Quantidade inválida");return;}
-    const item=catalog.find(c=>c.id===id);
-    recipe.push({ingrediente_id:id,quantidade:q,unidade:unit,nome:item.nome});
-    qtdIng.value="";
-    renderRecipeTable();
-  });
-  function calcCostForItem(it){
-    const item=catalog.find(c=>c.id===it.ingrediente_id);
-    if(!item)return 0;
-    const conv=convertUnits(it.quantidade,it.unidade,item.unit,item.density);
-    if(conv===null||isNaN(conv))return 0;
-    return (conv/Number(item.amount))*Number(item.price);
-  }
-  function convertUnits(value,from,to,density){
-    const v=Number(value)||0;
-    if(from===to)return v;
-    if(from==="unit"||to==="unit"){
-      if(from==="unit"&&to!=="unit"){
-        const grams=v*Number(density);
-        if(to==="g")return grams;
-        if(to==="ml")return grams/(Number(density)||1);
+
+    function renderCatalog(){
+      const sel = document.getElementById("ingredSelect");
+      sel.innerHTML = "";
+      const listDiv = document.getElementById("ingList");
+      listDiv.innerHTML = "";
+      catalog.forEach(i=>{
+        const opt=document.createElement("option");
+        opt.value=i.id; opt.textContent=i.nome;
+        sel.appendChild(opt);
+        const div=document.createElement("div");
+        div.style.display="flex";
+        div.style.justifyContent="space-between";
+        div.style.alignItems="center";
+        div.style.marginBottom="8px";
+        div.innerHTML=`<div>${i.nome} <small style="color:#7c5c47">(${i.amount}${i.unit} → R$ ${Number(i.price).toFixed(2)})</small></div>`;
+        const right=document.createElement("div");
+        right.style.display="flex"; right.style.gap="6px";
+        const btnE=document.createElement("button");
+        btnE.textContent="Editar"; btnE.className="small";
+        btnE.onclick=()=>loadIntoForm(i);
+        const btnD=document.createElement("button");
+        btnD.textContent="Excluir"; btnD.className="small";
+        btnD.onclick=()=>removeIngredient(i.id);
+        right.appendChild(btnE); right.appendChild(btnD);
+        div.appendChild(right);
+        listDiv.appendChild(div);
+      });
+    }
+
+    function loadIntoForm(i){
+      formName.value=i.nome;
+      formAmount.value=i.amount;
+      formUnit.value=i.unit;
+      formPrice.value=i.price;
+      formDensity.value=i.density;
+      btnAddIngDb.dataset.editing=i.id;
+      btnAddIngDb.textContent="Atualizar";
+    }
+
+    btnClearForm.addEventListener("click", ()=>clearForm());
+    function clearForm(){
+      formName.value=""; formAmount.value=100; formUnit.value="g"; formPrice.value=1.00; formDensity.value=1;
+      delete btnAddIngDb.dataset.editing;
+      btnAddIngDb.textContent="Salvar Ingrediente";
+    }
+
+    async function removeIngredient(id){
+      if(!confirm("Remover ingrediente do banco?")) return;
+      await fetch(API+"/ingredientes/"+id,{method:"DELETE"});
+      await loadIngredients(); renderRecipeTable();
+    }
+
+    btnAddIngDb.addEventListener("click", async ()=>{
+      const name=formName.value.trim();
+      const amount=Number(formAmount.value)||100;
+      const unit=formUnit.value;
+      const price=Number(formPrice.value)||0;
+      const density=Number(formDensity.value)||1;
+      if(!name){alert("Nome é obrigatório");return;}
+      const payload={nome:name,unit,amount,price,density};
+      const editing=btnAddIngDb.dataset.editing;
+      if(editing){
+        await fetch(API+"/ingredientes/"+editing,{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
+      } else {
+        await fetch(API+"/ingredientes",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
       }
-      if(to==="unit"&&from!=="unit"){
-        let grams=(from==="g")?v:(from==="ml"?v*Number(density):NaN);
-        return grams/(Number(density)||1);
+      clearForm(); await loadIngredients();
+    });
+
+    addIng.addEventListener("click", ()=>{
+      const sel=document.getElementById("ingredSelect");
+      const id=Number(sel.value);
+      const q=Number(qtdIng.value)||0;
+      const unit=unitIng.value;
+      if(!id){alert("Escolha um ingrediente");return;}
+      if(q<=0&&unit!=="unit"){alert("Quantidade inválida");return;}
+      const item=catalog.find(c=>c.id===id);
+      recipe.push({ingrediente_id:id,quantidade:q,unidade:unit,nome:item.nome});
+      qtdIng.value=""; renderRecipeTable();
+    });
+
+    function calcCostForItem(it){
+      const item=catalog.find(c=>c.id===it.ingrediente_id);
+      if(!item)return 0;
+      const conv=convertUnits(it.quantidade,it.unidade,item.unit,item.density);
+      if(conv===null||isNaN(conv))return 0;
+      return (conv/Number(item.amount))*Number(item.price);
+    }
+
+    function convertUnits(value,from,to,density){
+      const v=Number(value)||0;
+      if(from===to)return v;
+      if(from==="unit"||to==="unit"){
+        if(from==="unit"&&to!=="unit"){
+          const grams=v*Number(density);
+          if(to==="g")return grams;
+          if(to==="ml")return grams/(Number(density)||1);
+        }
+        if(to==="unit"&&from!=="unit"){
+          let grams=(from==="g")?v:(from==="ml"?v*Number(density):NaN);
+          return grams/(Number(density)||1);
+        }
+        return null;
       }
+      if(from==="ml"&&to==="g")return v*(Number(density)||1);
+      if(from==="g"&&to==="ml")return v/(Number(density)||1);
       return null;
     }
-    if(from==="ml"&&to==="g")return v*(Number(density)||1);
-    if(from==="g"&&to==="ml")return v/(Number(density)||1);
-    return null;
-  }
-  function renderRecipeTable(){
-    const tbody=document.querySelector("#tbl tbody");
-    tbody.innerHTML="";
-    let sum=0;
-    recipe.forEach((it,idx)=>{
-      const tr=document.createElement("tr");
-      const cost=calcCostForItem(it);
-      sum+=cost;
-      tr.innerHTML=`<td>${it.nome}</td><td>${it.quantidade}</td><td>${it.unidade}</td><td>R$ ${Number(cost).toFixed(2)}</td><td><button class="small" data-i="${idx}">Remover</button></td>`;
-      tbody.appendChild(tr);
-    });
-    tbody.querySelectorAll("button[data-i]").forEach(b=>{
-      b.addEventListener("click",(e)=>{
-        const i=Number(e.target.dataset.i);
-        recipe.splice(i,1);
-        renderRecipeTable();
+
+    function renderRecipeTable(){
+      const tbody=document.querySelector("#tbl tbody");
+      tbody.innerHTML="";
+      let sum=0;
+      recipe.forEach((it,idx)=>{
+        const tr=document.createElement("tr");
+        const cost=calcCostForItem(it);
+        sum+=cost;
+        tr.innerHTML=`<td>${it.nome}</td><td>${it.quantidade}</td><td>${it.unidade}</td><td>R$ ${Number(cost).toFixed(2)}</td><td><button class="small" data-i="${idx}">Remover</button></td>`;
+        tbody.appendChild(tr);
       });
-    });
-    const emb=Number(emb.value)||0;
-    const marg=Number(marg.value)||0;
-    const total=sum+emb;
-    const suggested=total*(1+marg/100);
-    cost.textContent="R$ "+total.toFixed(2);
-    price.textContent="R$ "+suggested.toFixed(2);
-  }
-  btnSaveRecipe.addEventListener("click", async ()=>{
-    const nome=nomeDoce.value.trim();
-    const categoria=categoria.value;
-    const embV=Number(emb.value)||0;
-    const margV=Number(marg.value)||50;
-    if(!nome){alert("Informe o nome da receita");return;}
-    if(recipe.length===0){alert("Adicione ingredientes");return;}
-    const payload={nome,categoria,embalagem:embV,margem:margV,ingredientes:recipe.map(r=>({ingrediente_id:r.ingrediente_id,quantidade:r.quantidade,unidade:r.unidade}))};
-    const res=await fetch(API+"/receitas",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
-    if(res.ok){
-      alert("Receita salva com sucesso!");
-      nomeDoce.value=""; recipe=[]; renderRecipeTable();
-    } else {
-      const err=await res.json();
-      alert("Erro: "+(err.detail||"verifique o console"));
-      console.error(err);
+      tbody.querySelectorAll("button[data-i]").forEach(b=>{
+        b.addEventListener("click",(e)=>{
+          const i=Number(e.target.dataset.i);
+          recipe.splice(i,1);
+          renderRecipeTable();
+        });
+      });
+      const embV=Number(emb.value)||0;
+      const margV=Number(marg.value)||0;
+      const total=sum+embV;
+      const suggested=total*(1+margV/100);
+      cost.textContent="R$ "+total.toFixed(2);
+      price.textContent="R$ "+suggested.toFixed(2);
     }
-  });
-  loadIngredients();
-  emb.addEventListener("input",renderRecipeTable);
-  marg.addEventListener("input",renderRecipeTable);
-</script>
+
+    btnSaveRecipe.addEventListener("click", async ()=>{
+      const nome=nomeDoce.value.trim();
+      const categoria=categoria.value;
+      const embV=Number(emb.value)||0;
+      const margV=Number(marg.value)||50;
+      if(!nome){alert("Informe o nome da receita");return;}
+      if(recipe.length===0){alert("Adicione ingredientes");return;}
+      const payload={nome,categoria,embalagem:embV,margem:margV,ingredientes:recipe.map(r=>({ingrediente_id:r.ingrediente_id,quantidade:r.quantidade,unidade:r.unidade}))};
+      const res=await fetch(API+"/receitas",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
+      if(res.ok){
+        alert("Receita salva com sucesso!");
+        nomeDoce.value=""; recipe=[]; renderRecipeTable();
+      } else {
+        const err=await res.json();
+        alert("Erro: "+(err.detail||"verifique o console"));
+        console.error(err);
+      }
+    });
+
+    loadIngredients();
+    emb.addEventListener("input",renderRecipeTable);
+    marg.addEventListener("input",renderRecipeTable);
+  </script>
 </body>
 </html>
