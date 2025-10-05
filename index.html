@@ -12,132 +12,25 @@
       --white:#fff;
       --muted:#fcf9f7;
     }
-
-    body{
-      font-family: 'Inter', Arial, sans-serif;
-      margin:0;
-      background:var(--muted);
-      color:#3a2b26;
-      padding:0;
-    }
-
-    header{
-      background:var(--brown);
-      color:var(--white);
-      padding:14px 20px;
-      text-align:center;
-      font-size:1.4rem;
-      font-weight:600;
-      letter-spacing:0.5px;
-    }
-
-    .wrap{
-      max-width:1200px;
-      margin:20px auto;
-      display:grid;
-      grid-template-columns:1fr 340px;
-      gap:20px;
-      padding:0 16px;
-    }
-
-    .card{
-      background:var(--white);
-      padding:16px 18px;
-      border-radius:12px;
-      box-shadow:0 4px 16px rgba(0,0,0,0.06);
-    }
-
-    h2, h3{
-      margin:0 0 12px 0;
-      color:var(--brown);
-      font-size:1.25rem;
-    }
-
-    label{
-      display:block;
-      font-size:14px;
-      margin:8px 0 4px;
-      color:#5a463a;
-    }
-
-    input,select{
-      padding:9px 10px;
-      border-radius:8px;
-      border:1px solid #e7ded8;
-      width:100%;
-      font-size:14px;
-      box-sizing:border-box;
-    }
-
-    .btn{
-      background:var(--brown);
-      color:var(--white);
-      padding:9px 14px;
-      border-radius:8px;
-      border:none;
-      cursor:pointer;
-      font-size:14px;
-      transition:background 0.2s, transform 0.1s;
-    }
-
-    .btn:hover{
-      background:#5a311c;
-      transform:scale(1.02);
-    }
-
-    .small{
-      background:#f5e9e2;
-      border:1px solid #dec5b5;
-      color:#543a2d;
-      padding:6px 8px;
-      border-radius:6px;
-      font-size:13px;
-      cursor:pointer;
-    }
-
-    .small:hover{ background:#f1e1d6; }
-
-    table{
-      width:100%;
-      border-collapse:collapse;
-      margin-top:8px;
-      font-size:14px;
-    }
-
-    th,td{
-      padding:8px 10px;
-      border-bottom:1px dashed #eee1da;
-      text-align:left;
-    }
-
-    th{
-      background:#faf6f4;
-      color:#5c4638;
-      font-weight:600;
-    }
-
-    .inline{
-      display:flex;
-      gap:10px;
-    }
-
-    hr{
-      border:none;
-      border-top:1px solid #f0e6df;
-      margin:14px 0;
-    }
-
-    .info{
-      margin-top:14px;
-      font-size:15px;
-      color:#3a2b26;
-    }
-
-    .info span{
-      font-weight:600;
-      color:var(--brown);
-    }
-
+    body{font-family:'Inter',Arial,sans-serif;margin:0;background:var(--muted);color:#3a2b26;padding:0;}
+    header{background:var(--brown);color:var(--white);padding:14px 20px;text-align:center;font-size:1.4rem;font-weight:600;letter-spacing:0.5px;}
+    .wrap{max-width:1200px;margin:20px auto;display:grid;grid-template-columns:1fr 340px;gap:20px;padding:0 16px;}
+    .card{background:var(--white);padding:16px 18px;border-radius:12px;box-shadow:0 4px 16px rgba(0,0,0,0.06);}
+    h2,h3{margin:0 0 12px 0;color:var(--brown);font-size:1.25rem;}
+    label{display:block;font-size:14px;margin:8px 0 4px;color:#5a463a;}
+    input,select{padding:9px 10px;border-radius:8px;border:1px solid #e7ded8;width:100%;font-size:14px;box-sizing:border-box;}
+    .btn{background:var(--brown);color:var(--white);padding:9px 14px;border-radius:8px;border:none;cursor:pointer;font-size:14px;transition:background 0.2s, transform 0.1s;}
+    .btn:hover{background:#5a311c;transform:scale(1.02);}
+    .small{background:#f5e9e2;border:1px solid #dec5b5;color:#543a2d;padding:6px 8px;border-radius:6px;font-size:13px;cursor:pointer;}
+    .small:hover{background:#f1e1d6;}
+    table{width:100%;border-collapse:collapse;margin-top:8px;font-size:14px;}
+    th,td{padding:8px 10px;border-bottom:1px dashed #eee1da;text-align:left;}
+    th{background:#faf6f4;color:#5c4638;font-weight:600;}
+    .inline{display:flex;gap:10px;}
+    hr{border:none;border-top:1px solid #f0e6df;margin:14px 0;}
+    .info{margin-top:14px;font-size:15px;color:#3a2b26;}
+    .info span{font-weight:600;color:var(--brown);}
+    #recipesList .card{margin-bottom:10px;}
     @media(max-width:980px){ .wrap{ grid-template-columns:1fr; } }
     @media(max-width:680px){
       header{ font-size:1.2rem; padding:12px; }
@@ -153,6 +46,7 @@
   <header>🍫 Precificador Pura Doçura</header>
 
   <div class="wrap">
+    <!-- Formulário de nova receita -->
     <main class="card">
       <h2>Nova Receita</h2>
 
@@ -183,7 +77,7 @@
             <option value="unit">unidade</option>
           </select>
         </div>
-        <button class="btn" id="addIng">Adicionar</button>
+        <button class="btn" id="addIng" style="margin-bottom: 3px;">Adicionar</button>
       </div>
 
       <table id="tbl">
@@ -198,17 +92,27 @@
         <div style="flex:1">
           <label>Margem (%)</label><input id="marg" type="number" step="any" value="50">
         </div>
+        <div style="flex:1">
+          <label>Rendimento (quantos doces)</label>
+          <input id="rendimento" type="number" step="1" value="1">
+        </div>
+
         <div>
-          <button class="btn" id="btnSaveRecipe">Salvar Receita</button>
+          <button class="btn" id="btnSaveRecipe" style="margin-top: 25px;">Salvar Receita</button>
         </div>
       </div>
 
       <div class="info">
         <div><strong>Custo total:</strong> <span id="cost">R$ 0,00</span></div>
-        <div><strong>Preço sugerido:</strong> <span id="price">R$ 0,00</span></div>
+        <div><strong>Preço sugerido por unidade:</strong> <span id="price">R$ 0,00</span></div>
       </div>
+
+      <hr>
+      <h2>Receitas Salvas</h2>
+      <div id="recipesList">Carregando...</div>
     </main>
 
+    <!-- Painel de ingredientes -->
     <aside class="card">
       <h2>Ingredientes</h2>
       <div id="ingList">Carregando...</div>
@@ -236,39 +140,33 @@
 
   <script>
     const API = "http://localhost:8000";
-    let catalog = [], recipe = [];
+    let catalog=[], recipe=[];
 
     async function loadIngredients(){
-      const res = await fetch(API + "/ingredientes");
+      const res = await fetch(API+"/ingredientes");
       catalog = await res.json();
       renderCatalog();
     }
 
     function renderCatalog(){
-      const sel = document.getElementById("ingredSelect");
-      sel.innerHTML = "";
-      const listDiv = document.getElementById("ingList");
-      listDiv.innerHTML = "";
+      const sel=document.getElementById("ingredSelect");
+      sel.innerHTML="";
+      const listDiv=document.getElementById("ingList");
+      listDiv.innerHTML="";
       catalog.forEach(i=>{
         const opt=document.createElement("option");
         opt.value=i.id; opt.textContent=i.nome;
         sel.appendChild(opt);
 
         const div=document.createElement("div");
-        div.style.display="flex";
-        div.style.justifyContent="space-between";
-        div.style.alignItems="center";
-        div.style.marginBottom="8px";
+        div.style.display="flex"; div.style.justifyContent="space-between"; div.style.alignItems="center"; div.style.marginBottom="8px";
         div.innerHTML=`<div>${i.nome} <small style="color:#7c5c47">(${i.amount}${i.unit} → R$ ${Number(i.price).toFixed(2)})</small></div>`;
-
         const right=document.createElement("div");
         right.style.display="flex"; right.style.gap="6px";
         const btnE=document.createElement("button");
-        btnE.textContent="Editar"; btnE.className="small";
-        btnE.onclick=()=>loadIntoForm(i);
+        btnE.textContent="Editar"; btnE.className="small"; btnE.onclick=()=>loadIntoForm(i);
         const btnD=document.createElement("button");
-        btnD.textContent="Excluir"; btnD.className="small";
-        btnD.onclick=()=>removeIngredient(i.id);
+        btnD.textContent="Excluir"; btnD.className="small"; btnD.onclick=()=>removeIngredient(i.id);
         right.appendChild(btnE); right.appendChild(btnD);
         div.appendChild(right);
         listDiv.appendChild(div);
@@ -285,9 +183,9 @@
       btnAddIngDb.textContent="Atualizar";
     }
 
-    btnClearForm.addEventListener("click", ()=>clearForm());
+    btnClearForm.addEventListener("click",()=>clearForm());
     function clearForm(){
-      formName.value=""; formAmount.value=100; formUnit.value="g"; formPrice.value=1.00; formDensity.value=1;
+      formName.value=""; formAmount.value=100; formUnit.value="g"; formPrice.value=1; formDensity.value=1;
       delete btnAddIngDb.dataset.editing;
       btnAddIngDb.textContent="Salvar Ingrediente";
     }
@@ -315,7 +213,7 @@
       clearForm(); await loadIngredients();
     });
 
-    addIng.addEventListener("click", ()=>{
+    addIng.addEventListener("click",()=>{
       const sel=document.getElementById("ingredSelect");
       const id=Number(sel.value);
       const q=Number(qtdIng.value)||0;
@@ -327,38 +225,22 @@
       qtdIng.value=""; renderRecipeTable();
     });
 
-    // ======= Função corrigida =======
     function calcCostForItem(it){
-      const item = catalog.find(c => c.id === it.ingrediente_id);
+      const item=catalog.find(c=>c.id===it.ingrediente_id);
       if(!item) return 0;
-
-      if(item.unit === "unit") {
-        return Number(item.price) * Number(it.quantidade); // 1 unidade = preço total
-      }
-
-      const conv = convertUnits(it.quantidade, it.unidade, item.unit, item.density);
-      if(conv === null || isNaN(conv)) return 0;
-
-      return (conv / Number(item.amount)) * Number(item.price);
+      let conv;
+      if(it.unidade==="unit" && item.unit==="unit") conv=it.quantidade;
+      else if(it.unidade==="unit" && item.unit!=="unit") conv=it.quantidade*Number(item.amount);
+      else conv=convertUnits(it.quantidade,it.unidade,item.unit,item.density);
+      if(conv===null||isNaN(conv)) return 0;
+      return (conv/Number(item.amount))*Number(item.price);
     }
 
     function convertUnits(value,from,to,density){
       const v=Number(value)||0;
-      if(from===to)return v;
-      if(from==="unit"||to==="unit"){
-        if(from==="unit"&&to!=="unit"){
-          const grams=v*Number(density);
-          if(to==="g")return grams;
-          if(to==="ml")return grams/(Number(density)||1);
-        }
-        if(to==="unit"&&from!=="unit"){
-          let grams=(from==="g")?v:(from==="ml"?v*Number(density):NaN);
-          return grams/(Number(density)||1);
-        }
-        return null;
-      }
-      if(from==="ml"&&to==="g")return v*(Number(density)||1);
-      if(from==="g"&&to==="ml")return v/(Number(density)||1);
+      if(from===to) return v;
+      if(from==="ml" && to==="g") return v*(Number(density)||1);
+      if(from==="g" && to==="ml") return v/(Number(density)||1);
       return null;
     }
 
@@ -373,33 +255,33 @@
         tr.innerHTML=`<td>${it.nome}</td><td>${it.quantidade}</td><td>${it.unidade}</td><td>R$ ${Number(cost).toFixed(2)}</td><td><button class="small" data-i="${idx}">Remover</button></td>`;
         tbody.appendChild(tr);
       });
-      tbody.querySelectorAll("button[data-i]").forEach(b=>{
-        b.addEventListener("click",(e)=>{
-          const i=Number(e.target.dataset.i);
-          recipe.splice(i,1);
-          renderRecipeTable();
-        });
-      });
+      tbody.querySelectorAll("button[data-i]").forEach(b=>{b.addEventListener("click",e=>{const i=Number(e.target.dataset.i);recipe.splice(i,1);renderRecipeTable();});});
       const embV=Number(emb.value)||0;
       const margV=Number(marg.value)||0;
-      const total=sum+embV;
-      const suggested=total*(1+margV/100);
-      cost.textContent="R$ "+total.toFixed(2);
-      price.textContent="R$ "+suggested.toFixed(2);
+      const rend=Number(rendimento.value)||1;
+      const total=sum;
+      const totalComMargem=(total+embV)*(1+margV/100);
+      const precoUnitario=totalComMargem/rend;
+      cost.textContent="R$ "+(total+embV).toFixed(2);
+      price.textContent="R$ "+precoUnitario.toFixed(2);
     }
 
+    // ======= SALVAR RECEITA =======
     btnSaveRecipe.addEventListener("click", async ()=>{
       const nome=nomeDoce.value.trim();
       const categoria=categoria.value;
       const embV=Number(emb.value)||0;
       const margV=Number(marg.value)||50;
+      const rend=Number(rendimento.value)||1;
       if(!nome){alert("Informe o nome da receita");return;}
       if(recipe.length===0){alert("Adicione ingredientes");return;}
-      const payload={nome,categoria,embalagem:embV,margem:margV,ingredientes:recipe.map(r=>({ingrediente_id:r.ingrediente_id,quantidade:r.quantidade,unidade:r.unidade}))};
+      const payload={nome,categoria,embalagem:embV,margem:margV,rendimento:rend,
+                     ingredientes:recipe.map(r=>({ingrediente_id:r.ingrediente_id,quantidade:r.quantidade,unidade:r.unidade}))};
       const res=await fetch(API+"/receitas",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
       if(res.ok){
         alert("Receita salva com sucesso!");
         nomeDoce.value=""; recipe=[]; renderRecipeTable();
+        loadReceitas();
       } else {
         const err=await res.json();
         alert("Erro: "+(err.detail||"verifique o console"));
@@ -407,9 +289,33 @@
       }
     });
 
+    // ======= CARREGAR RECEITAS SALVAS =======
+    async function loadReceitas(){
+      const res=await fetch(API+"/receitas");
+      const data=await res.json();
+      const div=document.getElementById("recipesList");
+      div.innerHTML="";
+      if(data.length===0){ div.textContent="Nenhuma receita cadastrada"; return; }
+      data.forEach(r=>{
+        const card=document.createElement("div");
+        card.className="card";
+        let html=`<strong>${r.nome}</strong> (${r.categoria||"Sem categoria"})<br>
+                  Rendimento: ${r.rendimento||1} doces<br>
+                  Custo total: R$ ${Number(r.custo_total).toFixed(2)}<br>
+                  Preço unitário: R$ ${(Number(r.preco_sugerido)/(r.rendimento||1)).toFixed(2)}<br>
+                  Ingredientes:<ul>`;
+        r.itens.forEach(i=>{html+=`<li>${i.quantidade} ${i.unidade} de ${i.nome}</li>`});
+        html+="</ul>";
+        card.innerHTML=html;
+        div.appendChild(card);
+      });
+    }
+
     loadIngredients();
+    loadReceitas();
     emb.addEventListener("input",renderRecipeTable);
     marg.addEventListener("input",renderRecipeTable);
+    rendimento.addEventListener("input",renderRecipeTable);
   </script>
 </body>
 </html>
