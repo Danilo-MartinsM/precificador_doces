@@ -1,8 +1,8 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-import sqlite3
 from typing import List, Optional
+import sqlite3
 from datetime import datetime
 
 DB_FILE = "precificador.db"
@@ -19,8 +19,8 @@ app.add_middleware(
 
 # --- Helpers ---
 def get_conn():
-    conn = sqlite3.connect(DB_FILE)
-    conn.row_factory = sqlite3.Row
+    conn = sqlite3.connect(DB_FILE, check_same_thread=False)
+    conn.row_factory = sqlite3.Row  # permite acessar colunas como dict
     return conn
 
 def init_db():
@@ -68,6 +68,7 @@ def init_db():
             FOREIGN KEY(ingrediente_id) REFERENCES ingredientes(id)
         )
     """)
+
     conn.commit()
     cur.close()
     conn.close()
@@ -103,7 +104,7 @@ def list_ingredientes():
     conn = get_conn()
     cur = conn.cursor()
     cur.execute("SELECT * FROM ingredientes ORDER BY nome ASC")
-    rows = [dict(r) for r in cur.fetchall()]
+    rows = [dict(row) for row in cur.fetchall()]
     cur.close()
     conn.close()
     return rows
@@ -158,14 +159,14 @@ def create_receita(receita: ReceitaIn):
     cur = conn.cursor()
 
     try:
-        # 1️⃣ Inserir receita básica
+        # Inserir receita básica
         cur.execute(
             "INSERT INTO receitas (nome, categoria, rendimento, embalagem, margem) VALUES (?, ?, ?, ?, ?)",
             (receita.nome, receita.categoria, receita.rendimento, receita.embalagem, receita.margem)
         )
         receita_id = cur.lastrowid
 
-        # 2️⃣ Inserir ingredientes e calcular custo total
+        # Inserir ingredientes e calcular custo total
         custo_total = 0.0
         for item in receita.ingredientes:
             cur.execute(
@@ -175,10 +176,8 @@ def create_receita(receita: ReceitaIn):
             ing = cur.fetchone()
             if not ing:
                 raise HTTPException(status_code=404, detail=f"Ingrediente {item.ingrediente_id} não encontrado")
-            
-            amount, price, unit, density, nome = ing
 
-            # --- Conversão de unidades ---
+            amount, price, unit, density, nome = ing
             conv = item.quantidade
             if item.unidade != unit:
                 if item.unidade == "ml" and unit == "g":
@@ -189,23 +188,20 @@ def create_receita(receita: ReceitaIn):
                     conv = item.quantidade * amount
                 elif unit == "unit" and item.unidade != "unit":
                     conv = item.quantidade / amount
-                # Se conversão inválida, mantém a quantidade original
 
             custo_item = (conv / amount) * price
             custo_total += custo_item
 
-            # Inserir relação receita x ingrediente
             cur.execute(
                 "INSERT INTO receita_ingredientes (receita_id, ingrediente_id, quantidade, unidade) VALUES (?, ?, ?, ?)",
                 (receita_id, item.ingrediente_id, item.quantidade, item.unidade)
             )
 
-        # 3️⃣ Calcular valores finais
+        # Calcular valores finais
         total_com_embalagem = custo_total + receita.embalagem
         preco_sugerido = total_com_embalagem * (1 + receita.margem / 100)
         preco_por_unidade = preco_sugerido / max(receita.rendimento, 1)
 
-        # 4️⃣ Atualizar receita com valores calculados
         cur.execute(
             "UPDATE receitas SET custo_total=?, preco_sugerido=?, preco_por_unidade=? WHERE id=?",
             (total_com_embalagem, preco_sugerido, preco_por_unidade, receita_id)
@@ -220,7 +216,6 @@ def create_receita(receita: ReceitaIn):
         cur.close()
         conn.close()
 
-    # Retornar receita completa
     return {
         "id": receita_id,
         "nome": receita.nome,
@@ -231,7 +226,6 @@ def create_receita(receita: ReceitaIn):
         "preco_por_unidade": round(preco_por_unidade, 2),
         "ingredientes": receita.ingredientes
     }
-
 
 @app.get("/receitas")
 def list_receitas():
@@ -255,5 +249,123 @@ def list_receitas():
     conn.close()
     return rows
 
-# --- Inicializa banco ao iniciar ---
+
+# --- Atualizar Receita ---
+@app.put("/receitas/{id}")
+def update_receita(id: int, receita: ReceitaIn):
+    conn = get_conn()
+    cur = conn.cursor()
+
+    # Verifica se receita existe
+    cur.execute("SELECT * FROM receitas WHERE id=?", (id,))
+    if not cur.fetchone():
+        cur.close()
+        conn.close()
+        raise HTTPException(status_code=404, detail="Receita não encontrada")
+
+    try:
+        # Atualiza dados básicos da receita
+        cur.execute("""
+            UPDATE receitas
+            SET nome=?, categoria=?, rendimento=?, embalagem=?, margem=?
+            WHERE id=?
+        """, (receita.nome, receita.categoria, receita.rendimento, receita.embalagem, receita.margem, id))
+
+        # Remove os ingredientes antigos
+        cur.execute("DELETE FROM receita_ingredientes WHERE receita_id=?", (id,))
+
+        # Reinsere os ingredientes e recalcula custo total
+        custo_total = 0.0
+        for item in receita.ingredientes:
+            cur.execute(
+                "SELECT amount, price, unit, density FROM ingredientes WHERE id=?",
+                (item.ingrediente_id,)
+            )
+            ing = cur.fetchone()
+            if not ing:
+                raise HTTPException(status_code=404, detail=f"Ingrediente {item.ingrediente_id} não encontrado")
+            amount, price, unit, density = ing
+
+            conv = item.quantidade
+            if item.unidade != unit:
+                if item.unidade == "ml" and unit == "g":
+                    conv = item.quantidade * density
+                elif item.unidade == "g" and unit == "ml":
+                    conv = item.quantidade / density
+                elif item.unidade == "unit" and unit != "unit":
+                    conv = item.quantidade * amount
+                elif unit == "unit" and item.unidade != "unit":
+                    conv = item.quantidade / amount
+
+            custo_item = (conv / amount) * price
+            custo_total += custo_item
+
+            cur.execute("""
+                INSERT INTO receita_ingredientes (receita_id, ingrediente_id, quantidade, unidade)
+                VALUES (?, ?, ?, ?)
+            """, (id, item.ingrediente_id, item.quantidade, item.unidade))
+
+        # Calcula preços finais
+        total_com_embalagem = custo_total + receita.embalagem
+        preco_sugerido = total_com_embalagem * (1 + receita.margem / 100)
+        preco_por_unidade = preco_sugerido / max(receita.rendimento, 1)
+
+        cur.execute("""
+            UPDATE receitas
+            SET custo_total=?, preco_sugerido=?, preco_por_unidade=?
+            WHERE id=?
+        """, (total_com_embalagem, preco_sugerido, preco_por_unidade, id))
+
+        conn.commit()
+
+    except Exception as e:
+        conn.rollback()
+        raise HTTPException(status_code=500, detail=f"Erro ao atualizar receita: {str(e)}")
+    finally:
+        cur.close()
+        conn.close()
+
+    return {
+        "id": id,
+        "nome": receita.nome,
+        "categoria": receita.categoria,
+        "rendimento": receita.rendimento,
+        "custo_total": round(total_com_embalagem, 2),
+        "preco_sugerido": round(preco_sugerido, 2),
+        "preco_por_unidade": round(preco_por_unidade, 2),
+        "ingredientes": receita.ingredientes
+    }
+
+
+# --- Excluir Receita ---
+@app.delete("/receitas/{id}")
+def delete_receita(id: int):
+    conn = get_conn()
+    cur = conn.cursor()
+
+    # Verifica se existe
+    cur.execute("SELECT * FROM receitas WHERE id=?", (id,))
+    if not cur.fetchone():
+        cur.close()
+        conn.close()
+        raise HTTPException(status_code=404, detail="Receita não encontrada")
+
+    try:
+        # Remove os ingredientes relacionados
+        cur.execute("DELETE FROM receita_ingredientes WHERE receita_id=?", (id,))
+        # Remove a receita
+        cur.execute("DELETE FROM receitas WHERE id=?", (id,))
+
+        conn.commit()
+    except Exception as e:
+        conn.rollback()
+        raise HTTPException(status_code=500, detail=f"Erro ao excluir receita: {str(e)}")
+    finally:
+        cur.close()
+        conn.close()
+
+    return {"deleted": id}
+
+
+# Inicializa banco ao iniciar
 init_db()

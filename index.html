@@ -40,6 +40,79 @@
       th,td{ padding:7px; }
     }
     @media(max-width:420px){ h2{ font-size:1.1rem; } label{ font-size:12px; } }
+
+    /* Estilo para cards de receitas */
+    .recipe-card {
+      background: var(--light-gold);
+      border-radius: 12px;
+      padding: 14px 18px;
+      margin-bottom: 12px;
+      box-shadow: 0 3px 12px rgba(0,0,0,0.08);
+      transition: transform 0.15s;
+    }
+    .recipe-card:hover {
+      transform: translateY(-2px);
+    }
+    .recipe-card h3 {
+      margin: 0 0 6px 0;
+      color: var(--brown);
+      font-size: 1.15rem;
+    }
+    .recipe-card .meta {
+      font-size: 13px;
+      color: #5c4638;
+      margin-bottom: 8px;
+    }
+    .recipe-card ul {
+      margin: 0;
+      padding-left: 16px;
+    }
+    .recipe-card li {
+      margin-bottom: 4px;
+    }
+    .recipe-card .costs {
+      margin-top: 8px;
+      font-weight: 600;
+      color: var(--brown);
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .recipe-card .actions {
+      display: flex;
+      gap: 6px;
+      margin-top: 8px;
+    }
+
+    .recipe-card .actions button {
+      font-size: 13px;
+      padding: 5px 10px;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+    }
+
+    .recipe-card .actions .edit-btn {
+      background: #ffd966;
+      color: #5a463a;
+    }
+
+    .recipe-card .actions .edit-btn:hover {
+      background: #f9d24a;
+      transform: scale(1.05);
+    }
+
+    .recipe-card .actions .delete-btn {
+      background: #e57373;
+      color: #fff;
+    }
+
+    .recipe-card .actions .delete-btn:hover {
+      background: #d64545;
+      transform: scale(1.05);
+    }
+
   </style>
 </head>
 <body>
@@ -140,182 +213,326 @@
 
   <script>
     const API = "http://localhost:8000";
-    let catalog=[], recipe=[];
+    let catalog = [], recipe = [];
 
-    async function loadIngredients(){
-      const res = await fetch(API+"/ingredientes");
+    // =====================
+    // FUNÇÕES DE API
+    // =====================
+    async function fetchIngredients() {
+      const res = await fetch(API + "/ingredientes");
       catalog = await res.json();
       renderCatalog();
     }
 
-    function renderCatalog(){
-      const sel=document.getElementById("ingredSelect");
-      sel.innerHTML="";
-      const listDiv=document.getElementById("ingList");
-      listDiv.innerHTML="";
-      catalog.forEach(i=>{
-        const opt=document.createElement("option");
-        opt.value=i.id; opt.textContent=i.nome;
+    async function fetchRecipes() {
+      const res = await fetch(API + "/receitas");
+      const data = await res.json();
+      renderRecipesList(data);
+    }
+
+    async function saveIngredient(payload, id=null) {
+      if (id) {
+        await fetch(`${API}/ingredientes/${id}`, {
+          method: "PUT",
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify(payload)
+        });
+      } else {
+        await fetch(`${API}/ingredientes`, {
+          method: "POST",
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify(payload)
+        });
+      }
+      clearForm();
+      await fetchIngredients();
+    }
+
+    async function removeIngredient(id) {
+      if (!confirm("Remover ingrediente do banco?")) return;
+      await fetch(`${API}/ingredientes/${id}`, { method: "DELETE" });
+      await fetchIngredients();
+      renderRecipeTable();
+    }
+
+    async function saveRecipe(payload, id=null) {
+      let res;
+      if (id) {
+        res = await fetch(`${API}/receitas/${id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+      } else {
+        res = await fetch(`${API}/receitas`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+      }
+      return res;
+    }
+
+    async function deleteRecipeAPI(id) {
+      if (!confirm("Deseja realmente excluir esta receita?")) return;
+      const res = await fetch(`${API}/receitas/${id}`, { method: "DELETE" });
+      return res.ok;
+    }
+
+    // =====================
+    // CÁLCULOS
+    // =====================
+    function convertUnits(value, from, to, density) {
+      const v = Number(value) || 0;
+      if (from === to) return v;
+      if (from === "ml" && to === "g") return v * (Number(density) || 1);
+      if (from === "g" && to === "ml") return v / (Number(density) || 1);
+      return null;
+    }
+
+    function calcCostForItem(it) {
+      const item = catalog.find(c => c.id === it.ingrediente_id);
+      if (!item) return 0;
+      let conv;
+      if (it.unidade === "unit" && item.unit === "unit") conv = it.quantidade;
+      else if (it.unidade === "unit" && item.unit !== "unit") conv = it.quantidade * Number(item.amount);
+      else conv = convertUnits(it.quantidade, it.unidade, item.unit, item.density);
+      if (conv === null || isNaN(conv)) return 0;
+      return (conv / Number(item.amount)) * Number(item.price);
+    }
+
+    function calcTotalCost() {
+      let sum = 0;
+      recipe.forEach(it => sum += calcCostForItem(it));
+      const embV = Number(emb.value) || 0;
+      const margV = Number(marg.value) || 0;
+      const rend = Number(rendimento.value) || 1;
+      const total = sum;
+      const totalComMargem = (total + embV) * (1 + margV / 100);
+      const precoUnitario = totalComMargem / rend;
+      return { total, totalComMargem, precoUnitario };
+    }
+
+    // =====================
+    // RENDERIZAÇÃO
+    // =====================
+    function renderCatalog() {
+      const sel = document.getElementById("ingredSelect");
+      sel.innerHTML = "";
+      const listDiv = document.getElementById("ingList");
+      listDiv.innerHTML = "";
+
+      catalog.forEach(i => {
+        // select
+        const opt = document.createElement("option");
+        opt.value = i.id;
+        opt.textContent = i.nome;
         sel.appendChild(opt);
 
-        const div=document.createElement("div");
-        div.style.display="flex"; div.style.justifyContent="space-between"; div.style.alignItems="center"; div.style.marginBottom="8px";
-        div.innerHTML=`<div>${i.nome} <small style="color:#7c5c47">(${i.amount}${i.unit} → R$ ${Number(i.price).toFixed(2)})</small></div>`;
-        const right=document.createElement("div");
-        right.style.display="flex"; right.style.gap="6px";
-        const btnE=document.createElement("button");
-        btnE.textContent="Editar"; btnE.className="small"; btnE.onclick=()=>loadIntoForm(i);
-        const btnD=document.createElement("button");
-        btnD.textContent="Excluir"; btnD.className="small"; btnD.onclick=()=>removeIngredient(i.id);
-        right.appendChild(btnE); right.appendChild(btnD);
+        // lista lateral
+        const div = document.createElement("div");
+        div.style.display = "flex";
+        div.style.justifyContent = "space-between";
+        div.style.alignItems = "center";
+        div.style.marginBottom = "8px";
+        div.innerHTML = `<div>${i.nome} <small style="color:#7c5c47">(${i.amount}${i.unit} → R$ ${Number(i.price).toFixed(2)})</small></div>`;
+        
+        const right = document.createElement("div");
+        right.style.display = "flex";
+        right.style.gap = "6px";
+        const btnE = document.createElement("button");
+        btnE.textContent = "Editar";
+        btnE.className = "small";
+        btnE.onclick = () => loadIntoForm(i);
+        const btnD = document.createElement("button");
+        btnD.textContent = "Excluir";
+        btnD.className = "small";
+        btnD.onclick = () => removeIngredient(i.id);
+        right.appendChild(btnE);
+        right.appendChild(btnD);
         div.appendChild(right);
         listDiv.appendChild(div);
       });
     }
 
-    function loadIntoForm(i){
-      formName.value=i.nome;
-      formAmount.value=i.amount;
-      formUnit.value=i.unit;
-      formPrice.value=i.price;
-      formDensity.value=i.density;
-      btnAddIngDb.dataset.editing=i.id;
-      btnAddIngDb.textContent="Atualizar";
-    }
-
-    btnClearForm.addEventListener("click",()=>clearForm());
-    function clearForm(){
-      formName.value=""; formAmount.value=100; formUnit.value="g"; formPrice.value=1; formDensity.value=1;
-      delete btnAddIngDb.dataset.editing;
-      btnAddIngDb.textContent="Salvar Ingrediente";
-    }
-
-    async function removeIngredient(id){
-      if(!confirm("Remover ingrediente do banco?")) return;
-      await fetch(API+"/ingredientes/"+id,{method:"DELETE"});
-      await loadIngredients(); renderRecipeTable();
-    }
-
-    btnAddIngDb.addEventListener("click", async ()=>{
-      const name=formName.value.trim();
-      const amount=Number(formAmount.value)||100;
-      const unit=formUnit.value;
-      const price=Number(formPrice.value)||0;
-      const density=Number(formDensity.value)||1;
-      if(!name){alert("Nome é obrigatório");return;}
-      const payload={nome:name,unit,amount,price,density};
-      const editing=btnAddIngDb.dataset.editing;
-      if(editing){
-        await fetch(API+"/ingredientes/"+editing,{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
-      } else {
-        await fetch(API+"/ingredientes",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
-      }
-      clearForm(); await loadIngredients();
-    });
-
-    addIng.addEventListener("click",()=>{
-      const sel=document.getElementById("ingredSelect");
-      const id=Number(sel.value);
-      const q=Number(qtdIng.value)||0;
-      const unit=unitIng.value;
-      if(!id){alert("Escolha um ingrediente");return;}
-      if(q<=0&&unit!=="unit"){alert("Quantidade inválida");return;}
-      const item=catalog.find(c=>c.id===id);
-      recipe.push({ingrediente_id:id,quantidade:q,unidade:unit,nome:item.nome});
-      qtdIng.value=""; renderRecipeTable();
-    });
-
-    function calcCostForItem(it){
-      const item=catalog.find(c=>c.id===it.ingrediente_id);
-      if(!item) return 0;
-      let conv;
-      if(it.unidade==="unit" && item.unit==="unit") conv=it.quantidade;
-      else if(it.unidade==="unit" && item.unit!=="unit") conv=it.quantidade*Number(item.amount);
-      else conv=convertUnits(it.quantidade,it.unidade,item.unit,item.density);
-      if(conv===null||isNaN(conv)) return 0;
-      return (conv/Number(item.amount))*Number(item.price);
-    }
-
-    function convertUnits(value,from,to,density){
-      const v=Number(value)||0;
-      if(from===to) return v;
-      if(from==="ml" && to==="g") return v*(Number(density)||1);
-      if(from==="g" && to==="ml") return v/(Number(density)||1);
-      return null;
-    }
-
-    function renderRecipeTable(){
-      const tbody=document.querySelector("#tbl tbody");
-      tbody.innerHTML="";
-      let sum=0;
-      recipe.forEach((it,idx)=>{
-        const tr=document.createElement("tr");
-        const cost=calcCostForItem(it);
-        sum+=cost;
-        tr.innerHTML=`<td>${it.nome}</td><td>${it.quantidade}</td><td>${it.unidade}</td><td>R$ ${Number(cost).toFixed(2)}</td><td><button class="small" data-i="${idx}">Remover</button></td>`;
+    function renderRecipeTable() {
+      const tbody = document.querySelector("#tbl tbody");
+      tbody.innerHTML = "";
+      recipe.forEach((it, idx) => {
+        const cost = calcCostForItem(it);
+        const tr = document.createElement("tr");
+        tr.innerHTML = `<td>${it.nome}</td><td>${it.quantidade}</td><td>${it.unidade}</td><td>R$ ${Number(cost).toFixed(2)}</td><td><button class="small" data-i="${idx}">Remover</button></td>`;
         tbody.appendChild(tr);
       });
-      tbody.querySelectorAll("button[data-i]").forEach(b=>{b.addEventListener("click",e=>{const i=Number(e.target.dataset.i);recipe.splice(i,1);renderRecipeTable();});});
-      const embV=Number(emb.value)||0;
-      const margV=Number(marg.value)||0;
-      const rend=Number(rendimento.value)||1;
-      const total=sum;
-      const totalComMargem=(total+embV)*(1+margV/100);
-      const precoUnitario=totalComMargem/rend;
-      cost.textContent="R$ "+(total+embV).toFixed(2);
-      price.textContent="R$ "+precoUnitario.toFixed(2);
+      tbody.querySelectorAll("button[data-i]").forEach(b => {
+        b.addEventListener("click", e => {
+          const i = Number(e.target.dataset.i);
+          recipe.splice(i, 1);
+          renderRecipeTable();
+        });
+      });
+
+      const costs = calcTotalCost();
+      cost.textContent = "R$ " + (costs.total + (Number(emb.value)||0)).toFixed(2);
+      price.textContent = "R$ " + costs.precoUnitario.toFixed(2);
     }
 
-    // ======= SALVAR RECEITA =======
-    btnSaveRecipe.addEventListener("click", async ()=>{
-      const nome=nomeDoce.value.trim();
-      const categoria=categoria.value;
-      const embV=Number(emb.value)||0;
-      const margV=Number(marg.value)||50;
-      const rend=Number(rendimento.value)||1;
-      if(!nome){alert("Informe o nome da receita");return;}
-      if(recipe.length===0){alert("Adicione ingredientes");return;}
-      const payload={nome,categoria,embalagem:embV,margem:margV,rendimento:rend,
-                     ingredientes:recipe.map(r=>({ingrediente_id:r.ingrediente_id,quantidade:r.quantidade,unidade:r.unidade}))};
-      const res=await fetch(API+"/receitas",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
-      if(res.ok){
+    function renderRecipesList(data) {
+      const div = document.getElementById("recipesList");
+      div.innerHTML = "";
+      if (data.length === 0) { div.textContent = "Nenhuma receita cadastrada"; return; }
+
+      data.forEach(r => {
+        const card = document.createElement("div");
+        card.className = "recipe-card";
+
+        let html = `<h3>${r.nome}</h3>
+                    <div class="meta">Categoria: ${r.categoria || "Sem categoria"} | Rendimento: ${r.rendimento || 1} doces</div>
+                    <div class="costs">
+                      <span>Custo total: R$ ${Number(r.custo_total).toFixed(2)}</span>
+                      <span>Preço/unidade: R$ ${(Number(r.preco_por_unidade)).toFixed(2)}</span>
+                    </div>
+                    <strong>Ingredientes:</strong>
+                    <ul>`;
+        r.itens.forEach(i => html += `<li>${i.quantidade} ${i.unidade} de ${i.nome}</li>`);
+        html += "</ul>";
+        html += `<div class="actions">
+                    <button class="edit-btn">Editar</button>
+                    <button class="delete-btn">Excluir</button>
+                </div>`;
+        card.innerHTML = html;
+        div.appendChild(card);
+
+        const [editBtn, deleteBtn] = card.querySelectorAll(".actions button");
+        editBtn.addEventListener("click", () => editRecipe(r));
+        deleteBtn.addEventListener("click", async () => {
+          if(await deleteRecipeAPI(r.id)) fetchRecipes();
+        });
+      });
+    }
+
+    // =====================
+    // FORMULÁRIOS
+    // =====================
+    function loadIntoForm(i) {
+      formName.value = i.nome;
+      formAmount.value = i.amount;
+      formUnit.value = i.unit;
+      formPrice.value = i.price;
+      formDensity.value = i.density;
+      btnAddIngDb.dataset.editing = i.id;
+      btnAddIngDb.textContent = "Atualizar";
+    }
+
+    function clearForm() {
+      formName.value = "";
+      formAmount.value = 100;
+      formUnit.value = "g";
+      formPrice.value = 1;
+      formDensity.value = 1;
+      delete btnAddIngDb.dataset.editing;
+      btnAddIngDb.textContent = "Salvar Ingrediente";
+    }
+
+    // =====================
+    // EVENTOS
+    // =====================
+    btnClearForm.addEventListener("click", clearForm);
+
+    btnAddIngDb.addEventListener("click", async () => {
+      const payload = {
+        nome: formName.value.trim(),
+        amount: Number(formAmount.value) || 100,
+        unit: formUnit.value,
+        price: Number(formPrice.value) || 0,
+        density: Number(formDensity.value) || 1
+      };
+      if (!payload.nome) { alert("Nome é obrigatório"); return; }
+      await saveIngredient(payload, btnAddIngDb.dataset.editing);
+    });
+
+    addIng.addEventListener("click", () => {
+      const sel = document.getElementById("ingredSelect");
+      const id = Number(sel.value);
+      const q = Number(qtdIng.value) || 0;
+      const unit = unitIng.value;
+      if (!id) { alert("Escolha um ingrediente"); return; }
+      if (q <= 0 && unit !== "unit") { alert("Quantidade inválida"); return; }
+      const item = catalog.find(c => c.id === id);
+      recipe.push({ ingrediente_id: id, quantidade: q, unidade: unit, nome: item.nome });
+      qtdIng.value = "";
+      renderRecipeTable();
+    });
+
+    // SALVAR / ATUALIZAR RECEITA
+    btnSaveRecipe.addEventListener("click", async () => {
+      const nome = nomeDoce.value.trim();
+      const categoriaValue = document.getElementById("categoria").value;
+      const embV = Number(emb.value) || 0;
+      const margV = Number(marg.value) || 50;
+      const rend = Number(rendimento.value) || 1;
+
+      if (!nome) { alert("Informe o nome da receita"); return; }
+      if (recipe.length === 0) { alert("Adicione ingredientes"); return; }
+
+      const payload = {
+        nome,
+        categoria: categoriaValue,
+        embalagem: embV,
+        margem: margV,
+        rendimento: rend,
+        ingredientes: recipe.map(r => ({ ingrediente_id: r.ingrediente_id, quantidade: r.quantidade, unidade: r.unidade }))
+      };
+
+      const editing = btnSaveRecipe.dataset.editing;
+      const res = await saveRecipe(payload, editing);
+      if (res.ok) {
         alert("Receita salva com sucesso!");
-        nomeDoce.value=""; recipe=[]; renderRecipeTable();
-        loadReceitas();
+        nomeDoce.value = "";
+        recipe = [];
+        renderRecipeTable();
+        delete btnSaveRecipe.dataset.editing;
+        btnSaveRecipe.textContent = "Salvar Receita";
+        fetchRecipes();
       } else {
-        const err=await res.json();
-        alert("Erro: "+(err.detail||"verifique o console"));
+        const err = await res.json();
+        alert("Erro: " + (err.detail || "verifique o console"));
         console.error(err);
       }
     });
 
-    // ======= CARREGAR RECEITAS SALVAS =======
-    async function loadReceitas(){
-      const res=await fetch(API+"/receitas");
-      const data=await res.json();
-      const div=document.getElementById("recipesList");
-      div.innerHTML="";
-      if(data.length===0){ div.textContent="Nenhuma receita cadastrada"; return; }
-      data.forEach(r=>{
-        const card=document.createElement("div");
-        card.className="card";
-        let html=`<strong>${r.nome}</strong> (${r.categoria||"Sem categoria"})<br>
-                  Rendimento: ${r.rendimento||1} doces<br>
-                  Custo total: R$ ${Number(r.custo_total).toFixed(2)}<br>
-                  Preço unitário: R$ ${(Number(r.preco_sugerido)/(r.rendimento||1)).toFixed(2)}<br>
-                  Ingredientes:<ul>`;
-        r.itens.forEach(i=>{html+=`<li>${i.quantidade} ${i.unidade} de ${i.nome}</li>`});
-        html+="</ul>";
-        card.innerHTML=html;
-        div.appendChild(card);
-      });
+    // EDITAR RECEITA
+    function editRecipe(r) {
+      nomeDoce.value = r.nome;
+      document.getElementById("categoria").value = r.categoria || "Bolos";
+      emb.value = r.embalagem;
+      marg.value = r.margem;
+      rendimento.value = r.rendimento;
+
+      recipe = r.itens.map(i => ({
+        ingrediente_id: i.ingrediente_id,
+        quantidade: i.quantidade,
+        unidade: i.unidade,
+        nome: i.nome
+      }));
+      renderRecipeTable();
+
+      btnSaveRecipe.textContent = "Atualizar Receita";
+      btnSaveRecipe.dataset.editing = r.id;
     }
 
-    loadIngredients();
-    loadReceitas();
-    emb.addEventListener("input",renderRecipeTable);
-    marg.addEventListener("input",renderRecipeTable);
-    rendimento.addEventListener("input",renderRecipeTable);
-  </script>
+    // INPUTS DINÂMICOS
+    emb.addEventListener("input", renderRecipeTable);
+    marg.addEventListener("input", renderRecipeTable);
+    rendimento.addEventListener("input", renderRecipeTable);
+
+    // =====================
+    // INICIALIZAÇÃO
+    // =====================
+    fetchIngredients();
+    fetchRecipes();
+    </script>
+
+
 </body>
 </html>
