@@ -226,22 +226,36 @@ def list_receitas():
 
 # --- conversão ---
 def convert_units_for_calc(value, from_unit, to_unit, density):
+    """
+    Converte entre gramas (g), mililitros (ml) e unidade (unit)
+    usando densidade para equivalência.
+    Exemplo: 1 unidade de chocolate pesa 15g (density=15)
+    """
     v = float(value or 0)
+    d = float(density or 1)
+
+    # Se for a mesma unidade, retorna igual
     if from_unit == to_unit:
         return v
-    if from_unit == "unit" or to_unit == "unit":
-        if from_unit == "unit" and to_unit != "unit":
-            grams = v * density
-            if to_unit == "g": return grams
-            if to_unit == "ml": return grams / (density or 1)
-        if to_unit == "unit" and from_unit != "unit":
-            grams = v if from_unit == "g" else v * density
-            if density == 0: return None
-            return grams / density
-        return None
-    if from_unit == "ml" and to_unit == "g": return v * (density or 1)
-    if from_unit == "g" and to_unit == "ml": return v / (density or 1)
+
+    # === Conversões com 'unit' ===
+    if from_unit == "unit" and to_unit == "g":
+        return v * d  # unidade → gramas
+    if from_unit == "unit" and to_unit == "ml":
+        return v * d / d  # unidade → ml (equivalente à massa convertida pelo mesmo d)
+    if to_unit == "unit" and from_unit == "g":
+        return v / d  # gramas → unidade
+    if to_unit == "unit" and from_unit == "ml":
+        return (v * d) / d  # ml → unidade (via densidade)
+    
+    # === Conversões entre g e ml ===
+    if from_unit == "g" and to_unit == "ml":
+        return v / d
+    if from_unit == "ml" and to_unit == "g":
+        return v * d
+
     return None
+
 
 # --- init db ao iniciar ---
 init_db()
