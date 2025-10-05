@@ -338,12 +338,28 @@
     });
 
     function calcCostForItem(it){
-      const item=catalog.find(c=>c.id===it.ingrediente_id);
-      if(!item)return 0;
-      const conv=convertUnits(it.quantidade,it.unidade,item.unit,item.density);
-      if(conv===null||isNaN(conv))return 0;
-      return (conv/Number(item.amount))*Number(item.price);
+      const item = catalog.find(c => c.id === it.ingrediente_id);
+      if(!item) return 0;
+
+      let conv;
+
+      if(it.unidade === "unit" && item.unit === "unit"){
+        // unidade cadastral e unidade selecionada → custo proporcional
+        conv = it.quantidade; // 1 unidade = 1
+      } else if(it.unidade === "unit" && item.unit !== "unit") {
+        // selecionou 1 unidade, mas ingrediente cadastrado em g/ml
+        conv = convertUnits(it.quantidade, "unit", item.unit, item.density);
+      } else {
+        // qualquer outra combinação (g ↔ ml ou g/ml ↔ unit)
+        conv = convertUnits(it.quantidade, it.unidade, item.unit, item.density);
+      }
+
+      if(conv === null || isNaN(conv)) return 0;
+
+      // cálculo: quantidade convertida / quantidade base do cadastro * preço
+      return (conv / Number(item.amount)) * Number(item.price);
     }
+
 
     function convertUnits(value,from,to,density){
       const v=Number(value)||0;
