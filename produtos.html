@@ -1,0 +1,332 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Produtos Pura Doçura</title>
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<style>
+:root{
+  --brown:#6b3e26;
+  --gold:#d4af37;
+  --light-gold:#f3e9d2;
+  --white:#fff;
+  --muted:#fcf9f7;
+}
+body{font-family:'Inter',Arial,sans-serif;margin:0;background:var(--muted);color:#3a2b26;padding:0;}
+header{background:var(--brown);color:var(--white);padding:14px 20px;text-align:center;font-size:1.4rem;font-weight:600;letter-spacing:0.5px;}
+.wrap{max-width:1200px;margin:20px auto;display:grid;grid-template-columns:1fr 340px;gap:20px;padding:0 16px;}
+.card{background:var(--white);padding:16px 18px;border-radius:12px;box-shadow:0 4px 16px rgba(0,0,0,0.06);}
+h2,h3{margin:0 0 12px 0;color:var(--brown);font-size:1.25rem;}
+label{display:block;font-size:14px;margin:8px 0 4px;color:#5a463a;}
+input,select{padding:9px 10px;border-radius:8px;border:1px solid #e7ded8;width:100%;font-size:14px;box-sizing:border-box;}
+.btn{background:var(--brown);color:var(--white);padding:9px 14px;border-radius:8px;border:none;cursor:pointer;font-size:14px;transition:background 0.2s, transform 0.1s;}
+.btn:hover{background:#5a311c;transform:scale(1.02);}
+.small{background:#f5e9e2;border:1px solid #dec5b5;color:#543a2d;padding:6px 8px;border-radius:6px;font-size:13px;cursor:pointer;}
+.small:hover{background:#f1e1d6;}
+table{width:100%;border-collapse:collapse;margin-top:8px;font-size:14px;}
+th,td{padding:8px 10px;border-bottom:1px dashed #eee1da;text-align:left;}
+th{background:#faf6f4;color:#5c4638;font-weight:600;}
+.inline{display:flex;gap:10px;}
+hr{border:none;border-top:1px solid #f0e6df;margin:14px 0;}
+.info{margin-top:14px;font-size:15px;color:#3a2b26;}
+.info span{font-weight:600;color:var(--brown);}
+#productsList .card{margin-bottom:10px;}
+@media(max-width:980px){ .wrap{ grid-template-columns:1fr; } }
+@media(max-width:680px){
+  header{ font-size:1.2rem; padding:12px; }
+  .inline{ flex-direction:column; gap:6px; }
+  input, select, .btn, .small{ font-size:15px; width:100%; }
+  table{ display:block; overflow-x:auto; white-space:nowrap; font-size:13px; }
+  th,td{ padding:7px; }
+}
+@media(max-width:420px){ h2{ font-size:1.1rem; } label{ font-size:12px; } }
+
+/* Cards produtos */
+.product-card {
+  background: var(--light-gold);
+  border-radius: 12px;
+  padding: 14px 18px;
+  margin-bottom: 12px;
+  box-shadow: 0 3px 12px rgba(0,0,0,0.08);
+  transition: transform 0.15s;
+}
+.product-card:hover { transform: translateY(-2px); }
+.product-card h3 { margin:0 0 6px 0; color:var(--brown); font-size:1.15rem; }
+.product-card .meta { font-size: 13px; color:#5c4638; margin-bottom: 8px; }
+.product-card ul { margin:0; padding-left:16px; }
+.product-card li { margin-bottom:4px; }
+.product-card .costs { margin-top:8px; font-weight:600; color:var(--brown); display:flex; justify-content:space-between; }
+.product-card .actions { display:flex; gap:6px; margin-top:8px; }
+.product-card .actions button { font-size:13px; padding:5px 10px; border-radius:6px; border:none; cursor:pointer; transition:background 0.2s, transform 0.1s; }
+.product-card .actions .edit-btn { background:#ffd966; color:#5a463a; }
+.product-card .actions .edit-btn:hover { background:#f9d24a; transform:scale(1.05); }
+.product-card .actions .delete-btn { background:#e57373; color:#fff; }
+.product-card .actions .delete-btn:hover { background:#d64545; transform:scale(1.05); }
+</style>
+</head>
+<body>
+<header>🛒 Produtos Pura Doçura 
+    <nav><a href="index.html">Receitas</a></nav>
+</header>
+
+<div class="wrap">
+  <!-- Formulário Produto -->
+  <main class="card">
+    <h2>Novo Produto</h2>
+    <label>Nome do Produto</label>
+    <input id="prodName" type="text" placeholder="Ex: Bolo de Cenoura Grande">
+
+    <label>Categoria</label>
+    <select id="prodCategory" style="width:100%"></select>
+
+    <hr>
+    <h3>Adicionar Receitas</h3>
+    <div class="inline" style="align-items:end">
+      <div style="flex:1">
+        <label>Receita</label>
+        <select id="recipeSelect" style="width:100%"></select>
+      </div>
+      <div style="flex:1">
+        <label>Quantidade</label>
+        <input id="recipeQty" type="number" step="any" value="1">
+      </div>
+      <div>
+        <button class="btn" id="addRecipeBtn">Adicionar</button>
+      </div>
+    </div>
+
+    <table id="recipesTable">
+      <thead><tr><th>Receita</th><th>Qtd</th><th>Custo</th><th></th></tr></thead>
+      <tbody></tbody>
+    </table>
+
+    <hr>
+    <h3>Adicionar Ingredientes</h3>
+    <div class="inline" style="align-items:end">
+      <div style="flex:1">
+        <label>Ingrediente</label>
+        <select id="ingSelect" style="width:100%"></select>
+      </div>
+      <div style="flex:1">
+        <label>Quantidade</label>
+        <input id="ingQty" type="number" step="any" value="0">
+      </div>
+      <div style="flex:1">
+        <label>Unidade</label>
+        <select id="ingUnit"><option value="g">g</option><option value="ml">ml</option><option value="unit">unidade</option></select>
+      </div>
+      <div>
+        <button class="btn" id="addIngBtn">Adicionar</button>
+      </div>
+    </div>
+
+    <table id="ingredientsTable">
+      <thead><tr><th>Ingrediente</th><th>Qtd</th><th>Unid.</th><th>Custo</th><th></th></tr></thead>
+      <tbody></tbody>
+    </table>
+
+    <hr>
+    <h3>Precificação</h3>
+    <div class="inline" style="align-items:end">
+      <div style="flex:1">
+        <label>Embalagem (R$)</label>
+        <input id="packCost" type="number" step="any" value="0">
+      </div>
+      <div style="flex:1">
+        <label>Margem (%)</label>
+        <input id="margin" type="number" step="any" value="50">
+      </div>
+      <div>
+        <button class="btn" id="saveProductBtn">Criar Produto</button>
+      </div>
+    </div>
+
+    <div class="info">
+      <div><strong>Custo total:</strong> <span id="prodCost">R$ 0,00</span></div>
+      <div><strong>Preço sugerido:</strong> <span id="prodPrice">R$ 0,00</span></div>
+    </div>
+
+    <hr>
+    <h2>Produtos Cadastrados</h2>
+    <div id="productsList">Carregando...</div>
+  </main>
+
+  <!-- Painel lateral de ajuda / info -->
+  <aside class="card">
+    <h2>Informações</h2>
+    <p>Escolha receitas e ingredientes para montar seu produto. Ajuste a margem e o preço da embalagem para calcular o preço final.</p>
+  </aside>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script>
+const API = "http://localhost:8000";
+let recipesCatalog = [], ingredientsCatalog = [];
+let productRecipes = [], productIngredients = [];
+
+// =======================
+// Inicialização select2
+// =======================
+$('#prodCategory').select2({ placeholder: 'Escolha categoria' });
+$('#recipeSelect').select2({ placeholder: 'Escolha receita' });
+$('#ingSelect').select2({ placeholder: 'Escolha ingrediente' });
+
+// =======================
+// Funções de fetch
+// =======================
+async function fetchCatalogs() {
+  const rRes = await fetch(API+'/receitas'); recipesCatalog = await rRes.json();
+  const iRes = await fetch(API+'/ingredientes'); ingredientsCatalog = await iRes.json();
+  renderSelects();
+  fetchProducts();
+}
+
+function renderSelects() {
+  $('#prodCategory').html('<option value="Bolos">Bolos</option><option value="Brigadeiros">Brigadeiros</option><option value="Doces">Doces</option>');
+  
+  $('#recipeSelect').html('');
+  recipesCatalog.forEach(r=>$('#recipeSelect').append(`<option value="${r.id}">${r.nome}</option>`));
+  $('#recipeSelect').trigger('change');
+
+  $('#ingSelect').html('');
+  ingredientsCatalog.forEach(i=>$('#ingSelect').append(`<option value="${i.id}">${i.nome}</option>`));
+  $('#ingSelect').trigger('change');
+}
+
+// =======================
+// Adicionar receitas/ingredientes
+// =======================
+$('#addRecipeBtn').click(()=>{
+  const id = Number($('#recipeSelect').val());
+  const qty = Number($('#recipeQty').val());
+  if(!id || qty<=0){ alert('Selecione receita e quantidade válida'); return; }
+  const rec = recipesCatalog.find(r=>r.id===id);
+  productRecipes.push({...rec, qty});
+  renderRecipeTable();
+});
+
+$('#addIngBtn').click(()=>{
+  const id = Number($('#ingSelect').val());
+  const qty = Number($('#ingQty').val());
+  const unit = $('#ingUnit').val();
+  if(!id || qty<=0){ alert('Selecione ingrediente e quantidade válida'); return; }
+  const ing = ingredientsCatalog.find(i=>i.id===id);
+  productIngredients.push({...ing, qty, unit});
+  renderIngredientTable();
+});
+
+// =======================
+// Render tables
+// =======================
+function renderRecipeTable(){
+  const tbody = $('#recipesTable tbody'); tbody.html('');
+  let total=0;
+  productRecipes.forEach((r,i)=>{
+    const cost = Number(r.preco_por_unidade || 0)*r.qty;
+    total+=cost;
+    tbody.append(`<tr>
+      <td>${r.nome}</td><td>${r.qty}</td><td>R$ ${cost.toFixed(2)}</td>
+      <td><button class="small" onclick="removeRecipe(${i})">Remover</button></td>
+    </tr>`);
+  });
+  renderTotals();
+}
+function removeRecipe(idx){ productRecipes.splice(idx,1); renderRecipeTable(); }
+
+function renderIngredientTable(){
+  const tbody = $('#ingredientsTable tbody'); tbody.html('');
+  let total=0;
+  productIngredients.forEach((r,i)=>{
+    const unitPrice = Number(r.price)/Number(r.amount); 
+    const cost = unitPrice*(Number(r.unit==='unit'?1:r.qty));
+    total+=cost;
+    tbody.append(`<tr>
+      <td>${r.nome}</td><td>${r.qty}</td><td>${r.unit}</td><td>R$ ${cost.toFixed(2)}</td>
+      <td><button class="small" onclick="removeIngredient(${i})">Remover</button></td>
+    </tr>`);
+  });
+  renderTotals();
+}
+function removeIngredient(idx){ productIngredients.splice(idx,1); renderIngredientTable(); }
+
+// =======================
+// Calcular totais e preço
+// =======================
+function renderTotals(){
+  let costRecipes=productRecipes.reduce((acc,r)=>acc+Number(r.preco_por_unidade||0)*r.qty,0);
+  let costIngredients=productIngredients.reduce((acc,r)=>{
+    const unitPrice = Number(r.price)/Number(r.amount);
+    const q = (r.unit==='unit')?r.qty:r.qty;
+    return acc + unitPrice*q;
+  },0);
+  const pack = Number($('#packCost').val()||0);
+  const margin = Number($('#margin').val()||50)/100;
+  const total = costRecipes + costIngredients + pack;
+  $('#prodCost').text('R$ '+total.toFixed(2));
+  $('#prodPrice').text('R$ '+(total*(1+margin)).toFixed(2));
+}
+
+// Atualizar ao mudar margem ou embalagem
+$('#packCost,#margin').on('input',renderTotals);
+
+// =======================
+// Salvar Produto
+// =======================
+$('#saveProductBtn').click(async ()=>{
+  const name = $('#prodName').val().trim();
+  const cat = $('#prodCategory').val();
+  if(!name){ alert('Informe nome do produto'); return; }
+  if(productRecipes.length+productIngredients.length===0){ alert('Adicione ao menos receita ou ingrediente'); return; }
+
+  const payload = {
+    nome:name,
+    categoria:cat,
+    receitas: productRecipes.map(r=>({id:r.id, qty:r.qty})),
+    ingredientes: productIngredients.map(i=>({id:i.id, qty:i.qty, unit:i.unit})),
+    embalagem: Number($('#packCost').val()||0),
+    margem: Number($('#margin').val()||50)
+  };
+  const res = await fetch(API+'/produtos',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+  if(res.ok){ alert('Produto criado!'); productRecipes=[]; productIngredients=[]; renderRecipeTable(); renderIngredientTable(); $('#prodName').val(''); fetchProducts(); }
+  else{ alert('Erro ao criar produto'); console.error(await res.text()); }
+});
+
+// =======================
+// Render Produtos cadastrados
+// =======================
+async function fetchProducts(){
+  const res = await fetch(API+'/produtos'); const data = await res.json();
+  const div = $('#productsList'); div.html('');
+  if(!data.length){ div.text('Nenhum produto cadastrado'); return; }
+  data.forEach(p=>{
+    const card = $('<div class="product-card"></div>');
+    let html = `<h3>${p.nome}</h3>
+      <div class="meta">Categoria: ${p.categoria}</div>
+      <div class="costs">
+        <span>Custo total: R$ ${Number(p.custo_total).toFixed(2)}</span>
+        <span>Preço/unidade: R$ ${Number(p.preco_final).toFixed(2)}</span>
+      </div>`;
+    if(p.receitas?.length){
+      html+=`<strong>Receitas:</strong><ul>`+p.receitas.map(r=>`<li>${r.nome} x ${r.qty}</li>`).join('')+`</ul>`;
+    }
+    if(p.ingredientes?.length){
+      html+=`<strong>Ingredientes:</strong><ul>`+p.ingredientes.map(i=>`<li>${i.nome} x ${i.qty} ${i.unit}</li>`).join('')+`</ul>`;
+    }
+    html+=`<div class="actions">
+      <button class="edit-btn">Editar</button>
+      <button class="delete-btn">Excluir</button>
+    </div>`;
+    card.html(html);
+    div.append(card);
+  });
+}
+
+// =======================
+// Inicialização
+// =======================
+fetchCatalogs();
+</script>
+</body>
+</html>
