@@ -227,13 +227,16 @@ def create_receita(receita: ReceitaIn):
             cur.execute("SELECT amount, price, unit, density FROM ingredientes WHERE id=?", (item.ingrediente_id,))
             ing = cur.fetchone()
             if not ing: raise HTTPException(status_code=404, detail=f"Ingrediente {item.ingrediente_id} não encontrado")
-            amount, price, unit, density = ing
-            conv = item.quantidade
+            amount = ing["amount"] or 1
+            price = ing["price"] or 0
+            unit = ing["unit"]
+            density = ing["density"] or 1
+            conv = float(item.quantidade)
             if item.unidade != unit:
-                if item.unidade=="ml" and unit=="g": conv = item.quantidade*density
-                elif item.unidade=="g" and unit=="ml": conv = item.quantidade/density
-                elif item.unidade=="unit" and unit!="unit": conv = item.quantidade*amount
-                elif unit=="unit" and item.unidade!="unit": conv = item.quantidade/amount
+                if item.unidade=="ml" and unit=="g": conv *= density
+                elif item.unidade=="g" and unit=="ml": conv /= density
+                elif item.unidade=="unit" and unit!="unit": conv *= amount
+                elif unit=="unit" and item.unidade!="unit": conv /= amount
             custo_item = (conv / amount) * price
             custo_total += custo_item
             cur.execute("INSERT INTO receita_ingredientes (receita_id, ingrediente_id, quantidade, unidade) VALUES (?,?,?,?)",
@@ -260,19 +263,23 @@ def list_receitas():
     cur = conn.cursor()
     cur.execute("SELECT * FROM receitas ORDER BY created_at DESC")
     rows = [dict(r) for r in cur.fetchall()]
+
     for r in rows:
         cur2 = conn.cursor()
         cur2.execute("""
-            SELECT ri.id, ri.quantidade, ri.unidade, i.id AS ingrediente_id, i.nome, i.unit AS ingrediente_unit, i.price, i.amount, i.density
+            SELECT ri.id, ri.quantidade, ri.unidade,
+                   i.id AS ingrediente_id, i.nome, i.unit AS ingrediente_unit, i.price, i.amount, i.density
             FROM receita_ingredientes ri
             JOIN ingredientes i ON i.id = ri.ingrediente_id
             WHERE ri.receita_id=?
         """, (r["id"],))
         r["itens"] = [dict(i) for i in cur2.fetchall()]
         cur2.close()
+
     cur.close()
     conn.close()
     return rows
+
 
 @app.put("/receitas/{id}")
 def update_receita(id: int, receita: ReceitaIn):
@@ -289,13 +296,16 @@ def update_receita(id: int, receita: ReceitaIn):
             cur.execute("SELECT amount, price, unit, density FROM ingredientes WHERE id=?", (item.ingrediente_id,))
             ing = cur.fetchone()
             if not ing: raise HTTPException(status_code=404, detail=f"Ingrediente {item.ingrediente_id} não encontrado")
-            amount, price, unit, density = ing
-            conv = item.quantidade
+            amount = ing["amount"] or 1
+            price = ing["price"] or 0
+            unit = ing["unit"]
+            density = ing["density"] or 1
+            conv = float(item.quantidade)
             if item.unidade != unit:
-                if item.unidade=="ml" and unit=="g": conv = item.quantidade*density
-                elif item.unidade=="g" and unit=="ml": conv = item.quantidade/density
-                elif item.unidade=="unit" and unit!="unit": conv = item.quantidade*amount
-                elif unit=="unit" and item.unidade!="unit": conv = item.quantidade/amount
+                if item.unidade=="ml" and unit=="g": conv *= density
+                elif item.unidade=="g" and unit=="ml": conv /= density
+                elif item.unidade=="unit" and unit!="unit": conv *= amount
+                elif unit=="unit" and item.unidade!="unit": conv /= amount
             custo_item = (conv / amount) * price
             custo_total += custo_item
             cur.execute("INSERT INTO receita_ingredientes (receita_id, ingrediente_id, quantidade, unidade) VALUES (?,?,?,?)",
@@ -337,80 +347,206 @@ def delete_receita(id: int):
 @app.post("/produtos")
 def create_produto(produto: ProdutoIn):
     conn = get_conn()
+    conn.row_factory = sqlite3.Row
     cur = conn.cursor()
     try:
-        cur.execute("INSERT INTO produtos (nome, categoria, embalagem, margem, rendimento) VALUES (?,?,?,?,?)",
-                    (produto.nome, produto.categoria, produto.embalagem, produto.margem, produto.rendimento))
+        # Cria produto
+        cur.execute(
+            "INSERT INTO produtos (nome, categoria, embalagem, margem, rendimento) VALUES (?,?,?,?,?)",
+            (produto.nome, produto.categoria, produto.embalagem, produto.margem, produto.rendimento)
+        )
         produto_id = cur.lastrowid
         custo_total = 0.0
+
+        # Adiciona receitas
         for item in produto.receitas:
             cur.execute("SELECT custo_total, rendimento FROM receitas WHERE id=?", (item.receita_id,))
             receita_db = cur.fetchone()
             if not receita_db: raise HTTPException(status_code=404, detail=f"Receita {item.receita_id} não encontrada")
-            receita_custo, receita_rendimento = receita_db
+            receita_custo = receita_db["custo_total"] or 0
+            receita_rendimento = receita_db["rendimento"] or 1
             custo_item = (item.quantidade / receita_rendimento) * receita_custo
             custo_total += custo_item
             cur.execute("INSERT INTO produto_receitas (produto_id, receita_id, quantidade) VALUES (?,?,?)",
                         (produto_id, item.receita_id, item.quantidade))
+
+        # Adiciona ingredientes diretos
         for item in produto.ingredientes:
             cur.execute("SELECT amount, price, unit, density FROM ingredientes WHERE id=?", (item.ingrediente_id,))
             ing = cur.fetchone()
             if not ing: raise HTTPException(status_code=404, detail=f"Ingrediente {item.ingrediente_id} não encontrado")
-            amount, price, unit, density = ing
-            conv = item.quantidade
+            amount = ing["amount"] or 1
+            price = ing["price"] or 0
+            unit = ing["unit"]
+            density = ing["density"] or 1
+            conv = float(item.quantidade)
             if item.unidade != unit:
-                if item.unidade=="ml" and unit=="g": conv = item.quantidade*density
-                elif item.unidade=="g" and unit=="ml": conv = item.quantidade/density
-                elif item.unidade=="unit" and unit!="unit": conv = item.quantidade*amount
-                elif unit=="unit" and item.unidade!="unit": conv = item.quantidade/amount
+                if item.unidade=="ml" and unit=="g": conv *= density
+                elif item.unidade=="g" and unit=="ml": conv /= density
+                elif item.unidade=="unit" and unit!="unit": conv *= amount
+                elif unit=="unit" and item.unidade!="unit": conv /= amount
             custo_item = (conv / amount) * price
             custo_total += custo_item
-            cur.execute("INSERT INTO produto_ingredientes (produto_id, ingrediente_id, quantidade, unidade) VALUES (?,?,?,?)",
-                        (produto_id, item.ingrediente_id, item.quantidade, item.unidade))
+            cur.execute(
+                "INSERT INTO produto_ingredientes (produto_id, ingrediente_id, quantidade, unidade) VALUES (?,?,?,?)",
+                (produto_id, item.ingrediente_id, item.quantidade, item.unidade)
+            )
+
         total_com_embalagem = custo_total + produto.embalagem
-        preco_por_unidade = total_com_embalagem*(1 + produto.margem/100)/max(produto.rendimento,1)
+        preco_por_unidade = total_com_embalagem * (1 + produto.margem/100) / max(produto.rendimento,1)
+
+        # Atualiza produto com custo e preço
         cur.execute("UPDATE produtos SET custo_total=?, preco_por_unidade=? WHERE id=?",
                     (total_com_embalagem, preco_por_unidade, produto_id))
         conn.commit()
+
+        # --- Buscar dados do banco para retornar corretamente ---
+        # Receitas
+        cur.execute("""
+            SELECT pr.quantidade, r.id AS receita_id, r.nome
+            FROM produto_receitas pr
+            JOIN receitas r ON r.id = pr.receita_id
+            WHERE pr.produto_id=?
+        """, (produto_id,))
+        receitas = [{"id": r["receita_id"], "nome": r["nome"], "qty": r["quantidade"]} for r in cur.fetchall()]
+
+        # Ingredientes
+        cur.execute("""
+            SELECT pi.quantidade, pi.unidade, i.id AS ingrediente_id, i.nome
+            FROM produto_ingredientes pi
+            JOIN ingredientes i ON i.id = pi.ingrediente_id
+            WHERE pi.produto_id=?
+        """, (produto_id,))
+        ingredientes = [{"id": i["ingrediente_id"], "nome": i["nome"], "qty": i["quantidade"], "unit": i["unidade"]}
+                        for i in cur.fetchall()]
+
     except Exception as e:
         conn.rollback()
         raise HTTPException(status_code=500, detail=f"Erro ao salvar produto: {str(e)}")
     finally:
-        cur.close(); conn.close()
-    return {"id": produto_id, "nome": produto.nome, "categoria": produto.categoria,
-            "rendimento": produto.rendimento, "custo_total": round(total_com_embalagem,2),
-            "preco_por_unidade": round(preco_por_unidade,2),
-            "receitas": produto.receitas, "ingredientes": produto.ingredientes}
+        cur.close()
+        conn.close()
+
+    return {
+        "id": produto_id,
+        "nome": produto.nome,
+        "categoria": produto.categoria,
+        "rendimento": produto.rendimento,
+        "custo_total": round(total_com_embalagem,2),
+        "preco_por_unidade": round(preco_por_unidade,2),
+        "preco_final": round(preco_por_unidade,2),
+        "receitas": receitas,
+        "ingredientes": ingredientes
+    }
+
+
 
 @app.get("/produtos")
 def list_produtos():
     conn = get_conn()
+    conn.row_factory = sqlite3.Row  # IMPORTANTE
     cur = conn.cursor()
+
     cur.execute("SELECT * FROM produtos ORDER BY id DESC")
     rows = [dict(r) for r in cur.fetchall()]
 
     for r in rows:
-        # receitas do produto (somente resumo)
+        # Receitas do produto com quantidade e nome
         cur.execute("""
-            SELECT pr.id, pr.quantidade, r.id AS receita_id, r.nome
+            SELECT pr.receita_id, pr.quantidade, r.nome
             FROM produto_receitas pr
             JOIN receitas r ON r.id = pr.receita_id
             WHERE pr.produto_id=?
         """, (r["id"],))
-        r["receitas"] = [dict(x) for x in cur.fetchall()]
+        r["receitas"] = [
+            {
+                "id": row["receita_id"],
+                "nome": row["nome"],
+                "qty": row["quantidade"]
+            }
+            for row in cur.fetchall()
+        ]
 
-        # ingredientes diretos do produto (se quiser manter)
+        # Ingredientes diretos do produto com quantidade, unidade e nome
         cur.execute("""
-            SELECT pi.id, pi.quantidade, pi.unidade, i.id AS ingrediente_id, i.nome
+            SELECT pi.ingrediente_id, pi.quantidade, pi.unidade, i.nome
             FROM produto_ingredientes pi
             JOIN ingredientes i ON i.id = pi.ingrediente_id
             WHERE pi.produto_id=?
         """, (r["id"],))
-        r["ingredientes"] = [dict(x) for x in cur.fetchall()]
+        r["ingredientes"] = [
+            {
+                "id": row["ingrediente_id"],
+                "nome": row["nome"],
+                "qty": row["quantidade"],
+                "unit": row["unidade"]
+            }
+            for row in cur.fetchall()
+        ]
+
+        # Garantir preço final
+        r["preco_final"] = r.get("preco_por_unidade", 0)
 
     cur.close()
     conn.close()
     return rows
+
+
+@app.get("/produtos/{id}")
+def get_produto(id: int):
+    conn = get_conn()
+    conn.row_factory = sqlite3.Row  # IMPORTANTE
+    cur = conn.cursor()
+
+    # Produto
+    cur.execute("SELECT * FROM produtos WHERE id=?", (id,))
+    prod = cur.fetchone()
+    if not prod:
+        cur.close(); conn.close()
+        raise HTTPException(status_code=404, detail="Produto não encontrado")
+    prod = dict(prod)
+
+    # Receitas
+    cur.execute("""
+        SELECT pr.receita_id, pr.quantidade, r.nome
+        FROM produto_receitas pr
+        JOIN receitas r ON r.id = pr.receita_id
+        WHERE pr.produto_id=?
+    """, (id,))
+    prod["receitas"] = [
+        {
+            "id": row["receita_id"],
+            "nome": row["nome"],
+            "qty": row["quantidade"]
+        }
+        for row in cur.fetchall()
+    ]
+
+    # Ingredientes diretos
+    cur.execute("""
+        SELECT pi.ingrediente_id, pi.quantidade, pi.unidade, i.nome
+        FROM produto_ingredientes pi
+        JOIN ingredientes i ON i.id = pi.ingrediente_id
+        WHERE pi.produto_id=?
+    """, (id,))
+    prod["ingredientes"] = [
+        {
+            "id": row["ingrediente_id"],
+            "nome": row["nome"],
+            "qty": row["quantidade"],
+            "unit": row["unidade"]
+        }
+        for row in cur.fetchall()
+    ]
+
+    # Preço final
+    prod["preco_final"] = prod.get("preco_por_unidade", 0)
+
+    cur.close()
+    conn.close()
+    return prod
+
+
 
 
 @app.delete("/produtos/{id}")
@@ -431,5 +567,114 @@ def delete_produto(id: int):
         cur.close(); conn.close()
     return {"deleted": id}
 
-# Inicializa banco ao iniciar
+@app.put("/produtos/{id}")
+def update_produto(id: int, produto: ProdutoIn):
+    conn = get_conn()
+    conn.row_factory = sqlite3.Row
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM produtos WHERE id=?", (id,))
+    existing = cur.fetchone()
+    if not existing:
+        cur.close(); conn.close()
+        raise HTTPException(status_code=404, detail="Produto não encontrado")
+    try:
+        # Atualiza dados do produto
+        cur.execute(
+            "UPDATE produtos SET nome=?, categoria=?, embalagem=?, margem=?, rendimento=? WHERE id=?",
+            (produto.nome, produto.categoria, produto.embalagem, produto.margem, produto.rendimento, id)
+        )
+
+        # Limpa receitas e ingredientes existentes
+        cur.execute("DELETE FROM produto_receitas WHERE produto_id=?", (id,))
+        cur.execute("DELETE FROM produto_ingredientes WHERE produto_id=?", (id,))
+
+        custo_total = 0.0
+
+        # Adiciona novas receitas e calcula custo
+        for item in produto.receitas:
+            cur.execute("SELECT custo_total, rendimento FROM receitas WHERE id=?", (item.receita_id,))
+            receita_db = cur.fetchone()
+            if not receita_db:
+                raise HTTPException(status_code=404, detail=f"Receita {item.receita_id} não encontrada")
+            receita_custo = receita_db["custo_total"] or 0
+            receita_rendimento = receita_db["rendimento"] or 1
+            custo_item = (item.quantidade / receita_rendimento) * receita_custo
+            custo_total += custo_item
+            cur.execute(
+                "INSERT INTO produto_receitas (produto_id, receita_id, quantidade) VALUES (?,?,?)",
+                (id, item.receita_id, item.quantidade)
+            )
+
+        # Adiciona novos ingredientes diretos e calcula custo
+        for item in produto.ingredientes:
+            cur.execute("SELECT amount, price, unit, density FROM ingredientes WHERE id=?", (item.ingrediente_id,))
+            ing = cur.fetchone()
+            if not ing:
+                raise HTTPException(status_code=404, detail=f"Ingrediente {item.ingrediente_id} não encontrado")
+            amount = ing["amount"] or 1
+            price = ing["price"] or 0
+            unit = ing["unit"]
+            density = ing["density"] or 1
+            conv = float(item.quantidade)
+            if item.unidade != unit:
+                if item.unidade=="ml" and unit=="g": conv *= density
+                elif item.unidade=="g" and unit=="ml": conv /= density
+                elif item.unidade=="unit" and unit!="unit": conv *= amount
+                elif unit=="unit" and item.unidade!="unit": conv /= amount
+            custo_item = (conv / amount) * price
+            custo_total += custo_item
+            cur.execute(
+                "INSERT INTO produto_ingredientes (produto_id, ingrediente_id, quantidade, unidade) VALUES (?,?,?,?)",
+                (id, item.ingrediente_id, item.quantidade, item.unidade)
+            )
+
+        total_com_embalagem = custo_total + produto.embalagem
+        preco_por_unidade = total_com_embalagem*(1 + produto.margem/100)/max(produto.rendimento,1)
+
+        # Atualiza custo total e preço por unidade
+        cur.execute(
+            "UPDATE produtos SET custo_total=?, preco_por_unidade=? WHERE id=?",
+            (total_com_embalagem, preco_por_unidade, id)
+        )
+
+        conn.commit()
+
+        # --- Buscar dados do banco para retornar corretamente ---
+        cur.execute("""
+            SELECT pr.quantidade, r.id AS receita_id, r.nome
+            FROM produto_receitas pr
+            JOIN receitas r ON r.id = pr.receita_id
+            WHERE pr.produto_id=?
+        """, (id,))
+        receitas = [{"id": r["receita_id"], "nome": r["nome"], "qty": r["quantidade"]} for r in cur.fetchall()]
+
+        cur.execute("""
+            SELECT pi.quantidade, pi.unidade, i.id AS ingrediente_id, i.nome
+            FROM produto_ingredientes pi
+            JOIN ingredientes i ON i.id = pi.ingrediente_id
+            WHERE pi.produto_id=?
+        """, (id,))
+        ingredientes = [{"id": i["ingrediente_id"], "nome": i["nome"], "qty": i["quantidade"], "unit": i["unidade"]}
+                        for i in cur.fetchall()]
+
+    except Exception as e:
+        conn.rollback()
+        raise HTTPException(status_code=500, detail=f"Erro ao atualizar produto: {str(e)}")
+    finally:
+        cur.close(); conn.close()
+
+    return {
+        "id": id,
+        "nome": produto.nome,
+        "categoria": produto.categoria,
+        "rendimento": produto.rendimento,
+        "custo_total": round(total_com_embalagem,2),
+        "preco_por_unidade": round(preco_por_unidade,2),
+        "preco_final": round(preco_por_unidade,2),
+        "receitas": receitas,
+        "ingredientes": ingredientes
+    }
+
+
+# Inicializa DB
 init_db()

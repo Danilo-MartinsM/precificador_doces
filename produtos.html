@@ -73,38 +73,23 @@ hr{border:none;border-top:1px solid #f0e6df;margin:14px 0;}
     font-size: 14px;
     color: #3a2b26;
 }
-
-.select2-container--default .select2-selection--single .select2-selection__rendered {
-    line-height: 26px; /* Alinha o texto verticalmente */
-}
-
-.select2-container--default .select2-selection--single .select2-selection__arrow {
-    height: 26px;
-    right: 10px;
-}
-
-.select2-container--default .select2-results__option {
-    padding: 6px 10px;
-}
-
+.select2-container--default .select2-selection--single .select2-selection__rendered { line-height: 26px; }
+.select2-container--default .select2-selection--single .select2-selection__arrow { height: 26px; right: 10px; }
+.select2-container--default .select2-results__option { padding: 6px 10px; }
 .select2-container--default .select2-selection--single:focus,
-.select2-container--default .select2-selection--single:active {
-    outline: none;
-    border-color: #d4af37; /* cor de foco, opcional */
-    box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.2);
-}
+.select2-container--default .select2-selection--single:active { outline: none; border-color: #d4af37; box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.2); }
 
+.toast { padding: 10px 16px; border-radius: 8px; background: var(--brown); color: #fff; font-size: 14px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); opacity: 0; transform: translateX(100%); transition: transform 0.3s, opacity 0.3s; }
+.toast.show { opacity: 1; transform: translateX(0); }
+.toast.success { background: #4caf50; }
+.toast.error { background: #e57373; }
 </style>
 </head>
 <body>
 <header>
     🍫 Precificador Pura Doçura
     <nav>
-        <a href="index.html">
-            <button class="btn" id="btnProdutos" style="margin-left:12px;">
-            🥄 Receitas
-            </button>
-        </a>
+        <a href="index.html"><button class="btn" id="btnProdutos" style="margin-left:12px;">🥄 Receitas</button></a>
     </nav>
 </header>
 
@@ -160,226 +145,451 @@ hr{border:none;border-top:1px solid #f0e6df;margin:14px 0;}
     </div>
 
     <table id="ingredientsTable">
-      <thead><tr><th>Ingrediente</th><th>Qtd</th><th>Unid.</th><th>Custo</th><th></th></tr></thead>
+      <thead><tr><th>Ingrediente</th><th>Qtd</th><th>Unidade</th><th>Custo</th><th></th></tr></thead>
       <tbody></tbody>
     </table>
 
     <hr>
-    <h3>Precificação</h3>
-    <div class="inline" style="align-items:end">
-      <div style="flex:1">
-        <label>Embalagem (R$)</label>
-        <input id="packCost" type="number" step="any" value="0">
-      </div>
-      <div style="flex:1">
-        <label>Margem (%)</label>
-        <input id="margin" type="number" step="any" value="50">
-      </div>
-      <div>
-        <button class="btn" id="saveProductBtn">Criar Produto</button>
-      </div>
-    </div>
-
+    <label>Custo Embalagem (R$)</label>
+    <input id="packCost" type="number" step="any" value="0">
+    <label>Margem (%)</label>
+    <input id="margin" type="number" step="any" value="50">
     <div class="info">
-      <div><strong>Custo total:</strong> <span id="prodCost">R$ 0,00</span></div>
-      <div><strong>Preço sugerido:</strong> <span id="prodPrice">R$ 0,00</span></div>
+      Custo Total: <span id="prodCost">R$ 0,00</span> | Preço Unitário: <span id="prodPrice">R$ 0,00</span>
     </div>
-
-    <hr>
-    <h2>Produtos Cadastrados</h2>
-    <div id="productsList">Carregando...</div>
+    <button class="btn" id="saveProductBtn" style="margin-top:12px;">Salvar Produto</button>
   </main>
 
-  <!-- Painel lateral de ajuda / info -->
+  <!-- Lista Produtos -->
   <aside class="card">
-    <h2>Informações</h2>
-    <p>Escolha receitas e ingredientes para montar seu produto. Ajuste a margem e o preço da embalagem para calcular o preço final.</p>
+    <h2>Produtos Cadastrados</h2>
+    <div id="productsList">Carregando produtos...</div>
   </aside>
+</div>
+
+<!-- Toast container -->
+<div id="toastContainer" style="position:fixed;top:20px;right:20px;z-index:9999;"></div>
+
+<!-- Modal de confirmação -->
+<div id="confirmModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);justify-content:center;align-items:center;z-index:999;">
+  <div style="background:#fff;padding:20px;border-radius:12px;max-width:300px;text-align:center;">
+    <p id="confirmMessage" style="margin-bottom:20px;font-size:15px;"></p>
+    <button id="confirmYes" class="btn">Sim</button>
+    <button id="confirmNo" class="btn" style="background:#ccc;color:#333;margin-left:10px;">Não</button>
+  </div>
 </div>
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script>
-const API = "http://localhost:8000";
-let recipesCatalog = [], ingredientsCatalog = [];
-let productRecipes = [], productIngredients = [];
+  const API = "http://localhost:8000";
 
-// =======================
-// Inicialização select2
-// =======================
-$('#prodCategory').select2({ placeholder: 'Escolha categoria' });
-$('#recipeSelect').select2({ placeholder: 'Escolha receita' });
-$('#ingSelect').select2({ placeholder: 'Escolha ingrediente' });
+  let recipesCatalog = [], ingredientsCatalog = [];
+  let productRecipes = [], productIngredients = [];
+  let editingProductId = null;
 
-// =======================
-// Funções de fetch
-// =======================
-async function fetchCatalogs() {
-    const rRes = await fetch(API+'/receitas'); recipesCatalog = await rRes.json();
-    const iRes = await fetch(API+'/ingredientes'); ingredientsCatalog = await iRes.json();
-    renderSelects();
-    fetchProducts();
-}
+  // =======================
+  // Inicialização select2
+  // =======================
+  $('#prodCategory').select2({ placeholder: 'Escolha categoria' });
+  $('#recipeSelect').select2({ placeholder: 'Escolha receita' });
+  $('#ingSelect').select2({ placeholder: 'Escolha ingrediente' });
 
-function renderSelects() {
-    $('#prodCategory').html('<option value="Bolos">Bolos</option><option value="Brigadeiros">Brigadeiros</option><option value="Doces">Doces</option>');
-    
-    $('#recipeSelect').html('');
-    recipesCatalog.forEach(r=>$('#recipeSelect').append(`<option value="${r.id}">${r.nome}</option>`));
-    $('#recipeSelect').trigger('change');
+  // =======================
+  // Toast e Modal
+  // =======================
+  function showToast(message, type='success', duration=3000){
+      const toastContainer = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      toast.className = `toast ${type}`;
+      toast.textContent = message;
+      toastContainer.appendChild(toast);
+      setTimeout(()=> toast.classList.add('show'), 50);
+      setTimeout(()=>{
+          toast.classList.remove('show');
+          setTimeout(()=> toast.remove(), 300);
+      }, duration);
+  }
 
-    $('#ingSelect').html('');
-    ingredientsCatalog.forEach(i=>$('#ingSelect').append(`<option value="${i.id}">${i.nome}</option>`));
-    $('#ingSelect').trigger('change');
-}
+  function showConfirm(message){
+      return new Promise((resolve)=>{
+          const modal = document.getElementById('confirmModal');
+          const msg = document.getElementById('confirmMessage');
+          msg.textContent = message;
+          modal.style.display = 'flex';
 
-// =======================
-// Conversão e cálculo
-// =======================
-function convertUnits(value, from, to, density) {
-    const v = Number(value) || 0;
-    if(from===to) return v;
-    if(from==="ml" && to==="g") return v * (Number(density)||1);
-    if(from==="g" && to==="ml") return v / (Number(density)||1);
-    return null;
-}
+          const yesBtn = document.getElementById('confirmYes');
+          const noBtn = document.getElementById('confirmNo');
 
-function calcCostForItem(it) {
-    const item = ingredientsCatalog.find(c=>c.id===it.id);
-    if(!item) return 0;
+          const clean = () => {
+              modal.style.display = 'none';
+              yesBtn.removeEventListener('click', yesHandler);
+              noBtn.removeEventListener('click', noHandler);
+          };
 
-    let conv;
-    if(it.unit==="unit" && item.unit==="unit") conv = it.qty;
-    else if(it.unit==="unit" && item.unit!=="unit") conv = it.qty * Number(item.amount);
-    else conv = convertUnits(it.qty, it.unit, item.unit, item.density);
+          const yesHandler = () => { clean(); resolve(true); };
+          const noHandler = () => { clean(); resolve(false); };
 
-    if(conv===null || isNaN(conv)) return 0;
-    return (conv / Number(item.amount)) * Number(item.price);
-}
+          yesBtn.addEventListener('click', yesHandler);
+          noBtn.addEventListener('click', noHandler);
+      });
+  }
 
-// =======================
-// Adicionar receitas/ingredientes
-// =======================
-$('#addRecipeBtn').click(()=>{
-    const id = Number($('#recipeSelect').val());
-    const qty = Number($('#recipeQty').val());
-    if(!id || qty<=0){ alert('Selecione receita e quantidade válida'); return; }
-    const rec = recipesCatalog.find(r=>r.id===id);
-    productRecipes.push({...rec, qty});
-    renderRecipeTable();
-});
+  // =======================
+  // Buscar catálogos e produtos
+  // =======================
+  async function fetchCatalogs() {
+      try {
+          const rRes = await fetch(API + '/receitas');
+          recipesCatalog = await rRes.json();
 
-$('#addIngBtn').click(()=>{
-    const id = Number($('#ingSelect').val());
-    const qty = Number($('#ingQty').val());
-    const unit = $('#ingUnit').val();
-    if(!id || qty<=0){ alert('Selecione ingrediente e quantidade válida'); return; }
-    const ing = ingredientsCatalog.find(i=>i.id===id);
-    productIngredients.push({...ing, qty, unit});
-    renderIngredientTable();
-});
+          const iRes = await fetch(API + '/ingredientes');
+          ingredientsCatalog = await iRes.json();
 
-// =======================
-// Render tables
-// =======================
-function renderRecipeTable(){
-    const tbody = $('#recipesTable tbody'); tbody.html('');
-    productRecipes.forEach((r,i)=>{
-        const cost = Number(r.preco_por_unidade || 0)*r.qty;
-        tbody.append(`<tr>
-        <td>${r.nome}</td><td>${r.qty}</td><td>R$ ${cost.toFixed(2)}</td>
-        <td><button class="small" onclick="removeRecipe(${i})">Remover</button></td>
-        </tr>`);
-    });
-    renderTotals();
-}
-function removeRecipe(idx){ productRecipes.splice(idx,1); renderRecipeTable(); }
+          renderSelects();
 
-function renderIngredientTable(){
-    const tbody = $('#ingredientsTable tbody'); tbody.html('');
-    productIngredients.forEach((r,i)=>{
-        const cost = calcCostForItem(r);
-        tbody.append(`<tr>
-        <td>${r.nome}</td><td>${r.qty}</td><td>${r.unit}</td><td>R$ ${cost.toFixed(2)}</td>
-        <td><button class="small" onclick="removeIngredient(${i})">Remover</button></td>
-        </tr>`);
-    });
-    renderTotals();
-}
-function removeIngredient(idx){ productIngredients.splice(idx,1); renderIngredientTable(); }
+          // Buscar produtos somente depois dos catálogos carregarem
+          await fetchProducts();
+      } catch (err) {
+          console.error(err);
+          showToast('Erro ao buscar catálogos do servidor', 'error');
+      }
+  }
 
-// =======================
-// Calcular totais e preço
-// =======================
-function renderTotals(){
-    let costRecipes = productRecipes.reduce((acc,r)=>acc + Number(r.preco_por_unidade||0)*r.qty,0);
-    let costIngredients = productIngredients.reduce((acc,r)=>acc + calcCostForItem(r),0);
-    const pack = Number($('#packCost').val()||0);
-    const margin = Number($('#margin').val()||50)/100;
-    const total = costRecipes + costIngredients + pack;
-    $('#prodCost').text('R$ '+total.toFixed(2));
-    $('#prodPrice').text('R$ '+(total*(1+margin)).toFixed(2));
-}
+  function renderSelects() {
+      $('#prodCategory').html(`
+          <option value="Bolo de pote">Bolo de pote</option>
+          <option value="Bolo gelado">Bolo gelado</option>
+          <option value="Bento cake">Bento cake</option>
+          <option value="Bolo caseiro">Bolo caseiro</option>
+          <option value="Kits">Kits</option>
+      `);
 
-// Atualizar ao mudar margem ou embalagem
-$('#packCost,#margin').on('input',renderTotals);
+      $('#recipeSelect').html('');
+      recipesCatalog.forEach(r => $('#recipeSelect').append(`<option value="${r.id}">${r.nome}</option>`));
+      $('#recipeSelect').trigger('change');
 
-// =======================
-// Salvar Produto
-// =======================
-$('#saveProductBtn').click(async ()=>{
-    const name = $('#prodName').val().trim();
-    const cat = $('#prodCategory').val();
-    if(!name){ alert('Informe nome do produto'); return; }
-    if(productRecipes.length+productIngredients.length===0){ alert('Adicione ao menos receita ou ingrediente'); return; }
+      $('#ingSelect').html('');
+      ingredientsCatalog.forEach(i => $('#ingSelect').append(`<option value="${i.id}">${i.nome}</option>`));
+      $('#ingSelect').trigger('change');
+  }
 
-    const payload = {
-        nome:name,
-        categoria:cat,
-        receitas: productRecipes.map(r=>({id:r.id, qty:r.qty})),
-        ingredientes: productIngredients.map(i=>({id:i.id, qty:i.qty, unit:i.unit})),
-        embalagem: Number($('#packCost').val()||0),
-        margem: Number($('#margin').val()||50)
-    };
-    const res = await fetch(API+'/produtos',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
-    if(res.ok){ alert('Produto criado!'); productRecipes=[]; productIngredients=[]; renderRecipeTable(); renderIngredientTable(); $('#prodName').val(''); fetchProducts(); }
-    else{ alert('Erro ao criar produto'); console.error(await res.text()); }
-});
+  // =======================
+  // Cálculo de custo
+  // =======================
+  function convertUnits(value, from, to, density) {
+      const v = Number(value) || 0;
+      if(from === to) return v;
+      if(from === "ml" && to === "g") return v * (Number(density) || 1);
+      if(from === "g" && to === "ml") return v / (Number(density) || 1);
+      return null;
+  }
 
-// =======================
-// Render Produtos cadastrados
-// =======================
-async function fetchProducts(){
-    const res = await fetch(API+'/produtos'); const data = await res.json();
-    const div = $('#productsList'); div.html('');
-    if(!data.length){ div.text('Nenhum produto cadastrado'); return; }
-    data.forEach(p=>{
-        const card = $('<div class="product-card"></div>');
-        let html = `<h3>${p.nome}</h3>
-        <div class="meta">Categoria: ${p.categoria}</div>
-        <div class="costs">
-            <span>Custo total: R$ ${Number(p.custo_total).toFixed(2)}</span>
-            <span>Preço/unidade: R$ ${Number(p.preco_final).toFixed(2)}</span>
-        </div>`;
-        if(p.receitas?.length){
-            html+=`<strong>Receitas:</strong><ul>`+p.receitas.map(r=>`<li>${r.nome} x ${r.qty}</li>`).join('')+`</ul>`;
-        }
-        if(p.ingredientes?.length){
-            html+=`<strong>Ingredientes:</strong><ul>`+p.ingredientes.map(i=>`<li>${i.nome} x ${i.qty} ${i.unit}</li>`).join('')+`</ul>`;
-        }
-        html+=`<div class="actions">
-        <button class="edit-btn">Editar</button>
-        <button class="delete-btn">Excluir</button>
-        </div>`;
-        card.html(html);
-        div.append(card);
-    });
-}
+  function calcCostForItem(it) {
+      const item = ingredientsCatalog.find(c => c.id === it.id);
+      if(!item) return 0;
 
-// =======================
-// Inicialização
-// =======================
-fetchCatalogs();
+      let conv;
+      if(it.unit === "unit" && item.unit === "unit") conv = it.qty;
+      else if(it.unit === "unit" && item.unit !== "unit") conv = it.qty * Number(item.amount);
+      else conv = convertUnits(it.qty, it.unit, item.unit, item.density);
+
+      if(conv === null || isNaN(conv)) return 0;
+      return (conv / Number(item.amount)) * Number(item.price);
+  }
+
+  // =======================
+  // Adicionar receitas/ingredientes
+  // =======================
+  $('#addRecipeBtn').click(() => {
+      const id = Number($('#recipeSelect').val());
+      const qty = Number($('#recipeQty').val());
+      if(!id || qty <= 0){ showToast('Selecione receita e quantidade válida', 'error'); return; }
+      const rec = recipesCatalog.find(r => r.id === id);
+      productRecipes.push({...rec, qty, preco_por_unidade: Number(rec.preco_por_unidade || 0)});
+      renderRecipeTable();
+  });
+
+  $('#addIngBtn').click(() => {
+      const id = Number($('#ingSelect').val());
+      const qty = Number($('#ingQty').val());
+      const unit = $('#ingUnit').val();
+      if(!id || qty <= 0){ showToast('Selecione ingrediente e quantidade válida', 'error'); return; }
+      const ing = ingredientsCatalog.find(i => i.id === id);
+      productIngredients.push({
+          ...ing, qty, unit,
+          price: Number(ing.price || 0),
+          amount: Number(ing.amount || 1),
+          density: Number(ing.density || 1)
+      });
+      renderIngredientTable();
+  });
+
+  // =======================
+  // Renderização das tabelas
+  // =======================
+  function renderRecipeTable(){
+      const tbody = $('#recipesTable tbody'); tbody.html('');
+      productRecipes.forEach((r,i)=>{
+          const cost = r.preco_por_unidade ? Number(r.preco_por_unidade)*r.qty : 0;
+          tbody.append(`<tr>
+              <td>${r.nome}</td>
+              <td>${r.qty}</td>
+              <td>R$ ${cost.toFixed(2)}</td>
+              <td><button class="small" onclick="removeRecipe(${i})">Remover</button></td>
+          </tr>`);
+      });
+      renderTotals();
+  }
+  function removeRecipe(idx){ productRecipes.splice(idx,1); renderRecipeTable(); }
+
+  function renderIngredientTable(){
+      const tbody = $('#ingredientsTable tbody'); tbody.html('');
+      productIngredients.forEach((r,i)=>{
+          const cost = calcCostForItem(r);
+          tbody.append(`<tr>
+              <td>${r.nome}</td>
+              <td>${r.qty}</td>
+              <td>${r.unit}</td>
+              <td>R$ ${cost.toFixed(2)}</td>
+              <td><button class="small" onclick="removeIngredient(${i})">Remover</button></td>
+          </tr>`);
+      });
+      renderTotals();
+  }
+  function removeIngredient(idx){ productIngredients.splice(idx,1); renderIngredientTable(); }
+
+  // =======================
+  // Totais e preços
+  // =======================
+  function renderTotals(){
+      let costRecipes = productRecipes.reduce((acc,r)=>acc + (Number(r.preco_por_unidade)||0)*r.qty,0);
+      let costIngredients = productIngredients.reduce((acc,r)=>acc + calcCostForItem(r),0);
+      const pack = Number($('#packCost').val()||0);
+      const margin = Number($('#margin').val()||50)/100;
+      const total = costRecipes + costIngredients + pack;
+      $('#prodCost').text('R$ '+total.toFixed(2));
+      $('#prodPrice').text('R$ '+(total*(1+margin)).toFixed(2));
+  }
+  $('#packCost,#margin').on('input', renderTotals);
+
+  // =======================
+  // Preencher formulário de edição
+  // =======================
+  function fillFormForEdit(product) {
+      editingProductId = product.id;
+      $('#prodName').val(product.nome);
+      $('#prodCategory').val(product.categoria).trigger('change');
+
+      // Usar nomes diretamente do backend se existirem, senão buscar no catálogo
+      productRecipes = (product.receitas || []).map(r => {
+          const rec = recipesCatalog.find(x => x.id === r.receita_id);
+          return {
+              id: r.receita_id,
+              nome: rec ? rec.nome : r.nome || '???',
+              qty: r.quantidade || 0,
+              preco_por_unidade: Number(r.preco_por_unidade || 0)
+          };
+      });
+
+      productIngredients = (product.ingredientes || []).map(i => {
+          const ing = ingredientsCatalog.find(x => x.id === i.ingrediente_id);
+          return {
+              id: i.ingrediente_id,
+              nome: ing ? ing.nome : i.nome || '???',
+              qty: i.quantidade || 0,
+              unit: i.unidade || '',
+              price: Number(i.preco || 0),
+              amount: Number(i.quantidade_base || 1),
+              density: Number(i.densidade || 1)
+          };
+      });
+
+      $('#packCost').val(product.embalagem || 0);
+      $('#margin').val(product.margem || 50);
+      renderRecipeTable();
+      renderIngredientTable();
+      renderTotals();
+      $('html, body').animate({ scrollTop: 0 }, 'fast');
+  }
+
+  // =======================
+  // Salvar produto
+  // =======================
+  $('#saveProductBtn').click(async () => {
+      const name = $('#prodName').val().trim();
+      const cat = $('#prodCategory').val();
+      if (!name){ showToast('Informe nome do produto', 'error'); return; }
+      if (productRecipes.length + productIngredients.length === 0){
+          showToast('Adicione ao menos receita ou ingrediente', 'error'); return;
+      }
+
+      const payload = {
+          nome: name,
+          categoria: cat,
+          receitas: productRecipes.map(r => ({ receita_id: r.id, quantidade: r.qty })),
+          ingredientes: productIngredients.map(i => ({ ingrediente_id: i.id, quantidade: i.qty, unidade: i.unit })),
+          embalagem: Number($('#packCost').val() || 0),
+          margem: Number($('#margin').val() || 50)
+      };
+
+      try {
+          let res;
+          if(editingProductId){
+              res = await fetch(`${API}/produtos/${editingProductId}`, {
+                  method: 'PUT',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify(payload)
+              });
+          } else {
+              res = await fetch(API + '/produtos', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify(payload)
+              });
+          }
+
+          if (res.ok){
+              showToast(editingProductId ? 'Produto atualizado!' : 'Produto criado!', 'success');
+              productRecipes = [];
+              productIngredients = [];
+              renderRecipeTable();
+              renderIngredientTable();
+              $('#prodName').val('');
+              editingProductId = null;
+              fetchProducts();
+          } else {
+              const errText = await res.text();
+              console.error(errText);
+              showToast('Erro ao salvar produto', 'error');
+          }
+      } catch(err){
+          console.error(err);
+          showToast('Erro de conexão com o servidor', 'error');
+      }
+  });
+
+  // =======================
+  // Listar produtos
+  // =======================
+  async function fetchProducts() {
+      try {
+          const res = await fetch(API + '/produtos');
+          const data = await res.json();
+          const div = $('#productsList'); 
+          div.html('');
+          if (!data.length) { 
+              div.text('Nenhum produto cadastrado'); 
+              return; 
+          }
+
+          data.forEach(p => {
+              const card = $('<div class="product-card"></div>').attr('data-id', p.id);
+              let html = `<h3>${p.nome}</h3>
+                          <div class="meta">Categoria: ${p.categoria || '-'}</div>
+                          <div class="costs">
+                              <span>Custo total: R$ ${Number(p.custo_total||0).toFixed(2)}</span>
+                              <span>Preço/unidade: R$ ${Number(p.preco_por_unidade||0).toFixed(2)}</span>
+                          </div>`;
+
+              // Renderizar receitas
+              if (p.receitas && p.receitas.length > 0) {
+                  html += `<strong>Receitas:</strong><ul>`;
+                  p.receitas.forEach(r => {
+                      const rec = recipesCatalog.find(x => x.id === r.receita_id);
+                      const nome = rec ? rec.nome : r.nome || '???';
+                      const quantidade = r.quantidade != null ? r.quantidade : 0;
+                      html += `<li>${nome} x ${quantidade}</li>`;
+                  });
+                  html += `</ul>`;
+              }
+
+              // Renderizar ingredientes
+              if (p.ingredientes && p.ingredientes.length > 0) {
+                  html += `<strong>Ingredientes:</strong><ul>`;
+                  p.ingredientes.forEach(i => {
+                      const ing = ingredientsCatalog.find(x => x.id === i.ingrediente_id);
+                      const nome = ing ? ing.nome : i.nome || '???';
+                      const quantidade = i.quantidade != null ? i.quantidade : 0;
+                      const unidade = i.unidade || '';
+                      html += `<li>${nome} x ${quantidade} ${unidade}</li>`;
+                  });
+                  html += `</ul>`;
+              }
+
+              html += `<div class="actions">
+                          <button class="edit-btn">Editar</button>
+                          <button class="delete-btn">Excluir</button>
+                      </div>`;
+              card.html(html);
+              div.append(card);
+          });
+      } catch(err) {
+          console.error(err);
+          $('#productsList').text('Erro ao carregar produtos');
+      }
+  }
+
+  // =======================
+  // Editar / Excluir
+  // =======================
+  $('#productsList').on('click', '.delete-btn', async function(){
+      const card = $(this).closest('.product-card');
+      const productId = card.data('id');
+      if(!productId){ showToast('ID do produto não encontrado', 'error'); return; }
+
+      const confirmed = await showConfirm('Deseja realmente excluir este produto?');
+      if(!confirmed) return;
+
+      try {
+          const res = await fetch(`${API}/produtos/${productId}`, { method: 'DELETE' });
+          if(res.ok){
+              card.remove();
+              showToast('Produto excluído com sucesso!', 'success');
+          } else {
+              showToast('Erro ao excluir produto', 'error');
+          }
+      } catch(err){
+          console.error(err);
+          showToast('Erro de conexão com o servidor', 'error');
+      }
+  });
+
+  $('#productsList').on('click', '.edit-btn', function(){
+      const card = $(this).closest('.product-card');
+      const productId = card.data('id');
+      if(!productId) return;
+
+      fetch(`${API}/produtos/${productId}`)
+          .then(res => res.ok ? res.json() : Promise.reject())
+          .then(product => fillFormForEdit(product))
+          .catch(err => {
+              console.error(err);
+              showToast('Erro ao carregar dados do produto', 'error');
+          });
+  });
+
+  // =======================
+  // Inicialização
+  // =======================
+  fetchCatalogs();
 </script>
+
+
+
+<!-- Modal de confirmação -->
+<div id="confirmModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);justify-content:center;align-items:center;z-index:1000;">
+  <div style="background:#fff;padding:20px;border-radius:12px;max-width:360px;width:90%;text-align:center;">
+    <p id="confirmMessage" style="margin-bottom:20px;">Tem certeza?</p>
+    <div style="display:flex;justify-content:space-around;">
+      <button id="confirmYes" class="btn">Sim</button>
+      <button id="confirmNo" class="btn" style="background:#e57373;">Não</button>
+    </div>
+  </div>
+</div>
+
+<!-- Container de Toast -->
+<div id="toastContainer" style="position:fixed;top:20px;right:20px;display:flex;flex-direction:column;gap:10px;z-index:1001;"></div>
+
 </body>
 </html>

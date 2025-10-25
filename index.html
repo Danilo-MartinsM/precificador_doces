@@ -330,10 +330,12 @@ hr{
       <h2>Nova Receita</h2>
 
       <label>Categoria</label>
+      <!--<option value="Cremes">Cremes</option><option value="Recheios">Recheios</option><option value="Massas">Massas</option><option value="Brigadeiros">Brigadeiros</option>-->
       <select id="categoria">
-        <option>Bolos</option>
+        <option>Cremes</option>
+        <option>Recheios</option>
+        <option>Massas</option>
         <option>Brigadeiros</option>
-        <option>Doces</option>
       </select>
 
       <label>Nome da Receita</label>
@@ -387,7 +389,25 @@ hr{
       </div>
 
       <hr>
-      <h2>Receitas Salvas</h2>
+      <h2>Filtrar Receitas</h2>
+      <div class="inline" style="gap:10px; align-items:center; margin-bottom:10px;">
+        <div style="flex:1">
+          <label>Nome</label>
+          <select id="filterNome" style="width:100%"></select>
+        </div>
+        <div style="flex:1">
+          <label>Categoria</label>
+          <select id="filterCategoria">
+            <option value="">Todas</option>
+            <option>Cremes</option>
+            <option>Recheios</option>
+            <option>Massas</option>
+            <option>Brigadeiros</option>
+          </select>
+        </div>
+      </div>
+
+
       <div id="recipesList">Carregando...</div>
     </main>
 
@@ -644,29 +664,39 @@ hr{
       if (!nomeR) return alert("Informe o nome da receita!");
       if (recipe.length === 0) return alert("Adicione ao menos um ingrediente!");
 
-      const costs = calcTotalCost();
       const payload = {
         nome: nomeR,
         categoria: categoria.value,
-        peso_por_unidade: Number(pesoUnidade.value)||100,
-        custo_total: costs.total + Number(emb.value)||0,
-        preco_por_unidade: costs.precoPorGrama,
-        itens: recipe
+        rendimento: Number(pesoUnidade.value) || 100, // ou ajuste conforme sua lógica
+        embalagem: Number(emb.value) || 0,
+        margem: Number(marg.value) || 50,
+        ingredientes: recipe.map(it => ({
+          ingrediente_id: it.ingrediente_id,
+          quantidade: Number(it.quantidade) || 0,
+          unidade: it.unidade
+        }))
       };
 
+      let res;
       if (editingRecipeId) {
-        await saveRecipe(payload, editingRecipeId);
+        res = await saveRecipe(payload, editingRecipeId);
         editingRecipeId = null;
         btnSaveRecipe.textContent = "Salvar Receita";
       } else {
-        await saveRecipe(payload);
+        res = await saveRecipe(payload);
       }
 
-      recipe = [];
-      renderRecipeTable();
-      nomeDoce.value="";
-      await fetchRecipes();
+      if (res && res.ok) {
+        recipe = [];
+        renderRecipeTable();
+        nomeDoce.value = "";
+        await fetchRecipes();
+      } else {
+        const err = await res.json();
+        alert("Erro ao salvar receita: " + (err.detail || "Desconhecido"));
+      }
     });
+
 
     function loadIntoForm(item) {
       formName.value = item.nome;
@@ -747,6 +777,51 @@ hr{
       initSelect2();
     }
 
+
+
+    let allRecipes = [];
+
+    // Inicializa Select2 para filtro de nome
+    function initFilterNome() {
+      $('#filterNome').empty(); // limpa opções antigas
+
+      $('#filterNome').select2({
+        placeholder: "Selecione ou digite o nome da receita",
+        allowClear: true,
+        width: '100%',
+        data: allRecipes.map(r => ({ id: r.id, text: r.nome }))
+      });
+
+      // Garante que nada está selecionado por padrão
+      $('#filterNome').val(null).trigger('change');
+    }
+
+
+    // Renderiza receitas filtradas
+    function renderFilteredRecipes() {
+      const nomeId = $('#filterNome').val();
+      const categoria = document.getElementById("filterCategoria").value;
+
+      let filtered = allRecipes;
+
+      if (nomeId) filtered = filtered.filter(r => r.id == nomeId);
+      if (categoria) filtered = filtered.filter(r => r.categoria === categoria);
+
+      renderRecipesList(filtered);
+    }
+
+    // Atualiza filtro de nome ao carregar receitas
+    async function fetchRecipes() {
+      const res = await fetch(API + "/receitas");
+      const data = await res.json();
+      allRecipes = data;
+      initFilterNome();
+      renderFilteredRecipes();
+    }
+
+    // Eventos para filtro
+    $('#filterNome').on('change', renderFilteredRecipes);
+    document.getElementById('filterCategoria').addEventListener('change', renderFilteredRecipes);
 
     // =====================
     // INICIALIZAÇÃO
