@@ -5,119 +5,323 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Precificador Pura Doçura</title>
   <style>
-    :root{
-      --brown:#6b3e26;
-      --gold:#d4af37;
-      --light-gold:#f3e9d2;
-      --white:#fff;
-      --muted:#fcf9f7;
-    }
-    body{font-family:'Inter',Arial,sans-serif;margin:0;background:var(--muted);color:#3a2b26;padding:0;}
-    header{background:var(--brown);color:var(--white);padding:14px 20px;text-align:center;font-size:1.4rem;font-weight:600;letter-spacing:0.5px;}
-    .wrap{max-width:1200px;margin:20px auto;display:grid;grid-template-columns:1fr 340px;gap:20px;padding:0 16px;}
-    .card{background:var(--white);padding:16px 18px;border-radius:12px;box-shadow:0 4px 16px rgba(0,0,0,0.06);}
-    h2,h3{margin:0 0 12px 0;color:var(--brown);font-size:1.25rem;}
-    label{display:block;font-size:14px;margin:8px 0 4px;color:#5a463a;}
-    input,select{padding:9px 10px;border-radius:8px;border:1px solid #e7ded8;width:100%;font-size:14px;box-sizing:border-box;}
-    .btn{background:var(--brown);color:var(--white);padding:9px 14px;border-radius:8px;border:none;cursor:pointer;font-size:14px;transition:background 0.2s, transform 0.1s;}
-    .btn:hover{background:#5a311c;transform:scale(1.02);}
-    .small{background:#f5e9e2;border:1px solid #dec5b5;color:#543a2d;padding:6px 8px;border-radius:6px;font-size:13px;cursor:pointer;}
-    .small:hover{background:#f1e1d6;}
-    table{width:100%;border-collapse:collapse;margin-top:8px;font-size:14px;}
-    th,td{padding:8px 10px;border-bottom:1px dashed #eee1da;text-align:left;}
-    th{background:#faf6f4;color:#5c4638;font-weight:600;}
-    .inline{display:flex;gap:10px;}
-    hr{border:none;border-top:1px solid #f0e6df;margin:14px 0;}
-    .info{margin-top:14px;font-size:15px;color:#3a2b26;}
-    .info span{font-weight:600;color:var(--brown);}
-    #recipesList .card{margin-bottom:10px;}
-    @media(max-width:980px){ .wrap{ grid-template-columns:1fr; } }
-    @media(max-width:680px){
-      header{ font-size:1.2rem; padding:12px; }
-      .inline{ flex-direction:column; gap:6px; }
-      input, select, .btn, .small{ font-size:15px; width:100%; }
-      table{ display:block; overflow-x:auto; white-space:nowrap; font-size:13px; }
-      th,td{ padding:7px; }
-    }
-    @media(max-width:420px){ h2{ font-size:1.1rem; } label{ font-size:12px; } }
+  :root{
+  --brown:#6b3e26;
+  --gold:#d4af37;
+  --light-gold:#f3e9d2;
+  --white:#fff;
+  --muted:#fcf9f7;
+}
 
-    /* Estilo para cards de receitas */
-    .recipe-card {
-      background: var(--light-gold);
-      border-radius: 12px;
-      padding: 14px 18px;
-      margin-bottom: 12px;
-      box-shadow: 0 3px 12px rgba(0,0,0,0.08);
-      transition: transform 0.15s;
-    }
-    .recipe-card:hover {
-      transform: translateY(-2px);
-    }
-    .recipe-card h3 {
-      margin: 0 0 6px 0;
-      color: var(--brown);
-      font-size: 1.15rem;
-    }
-    .recipe-card .meta {
-      font-size: 13px;
-      color: #5c4638;
-      margin-bottom: 8px;
-    }
-    .recipe-card ul {
-      margin: 0;
-      padding-left: 16px;
-    }
-    .recipe-card li {
-      margin-bottom: 4px;
-    }
-    .recipe-card .costs {
-      margin-top: 8px;
-      font-weight: 600;
-      color: var(--brown);
-      display: flex;
-      justify-content: space-between;
-    }
+body{
+  font-family:'Inter',Arial,sans-serif;
+  margin:0;
+  background:var(--muted);
+  color:#3a2b26;
+  padding:0;
+}
 
-    .recipe-card .actions {
-      display: flex;
-      gap: 6px;
-      margin-top: 8px;
-    }
+header{
+  background:var(--brown);
+  color:var(--white);
+  padding:14px 20px;
+  text-align:center;
+  font-size:1.4rem;
+  font-weight:600;
+  letter-spacing:0.5px;
+}
 
-    .recipe-card .actions button {
-      font-size: 13px;
-      padding: 5px 10px;
-      border-radius: 6px;
-      border: none;
-      cursor: pointer;
-      transition: background 0.2s, transform 0.1s;
-    }
+.wrap{
+  max-width:1200px;
+  margin:20px auto;
+  display:grid;
+  grid-template-columns:1fr 340px;
+  gap:20px;
+  padding:0 16px;
+}
 
-    .recipe-card .actions .edit-btn {
-      background: #ffd966;
-      color: #5a463a;
-    }
+.card{
+  background:var(--white);
+  padding:16px 18px;
+  border-radius:12px;
+  box-shadow:0 4px 16px rgba(0,0,0,0.06);
+}
 
-    .recipe-card .actions .edit-btn:hover {
-      background: #f9d24a;
-      transform: scale(1.05);
-    }
+h2,h3{
+  margin:0 0 12px 0;
+  color:var(--brown);
+  font-size:1.25rem;
+}
 
-    .recipe-card .actions .delete-btn {
-      background: #e57373;
-      color: #fff;
-    }
+label{
+  display:block;
+  font-size:14px;
+  margin:8px 0 4px;
+  color:#5a463a;
+}
 
-    .recipe-card .actions .delete-btn:hover {
-      background: #d64545;
-      transform: scale(1.05);
-    }
+input,select{
+  padding:9px 10px;
+  border-radius:8px;
+  border:1px solid #e7ded8;
+  width:100%;
+  font-size:14px;
+  box-sizing:border-box;
+}
+
+.btn{
+  background:var(--brown);
+  color:var(--white);
+  padding:9px 14px;
+  border-radius:8px;
+  border:none;
+  cursor:pointer;
+  font-size:14px;
+  transition:background 0.2s, transform 0.1s;
+}
+
+.btn:hover{
+  background:#5a311c;
+  transform:scale(1.02);
+}
+
+.small{
+  background:#f5e9e2;
+  border:1px solid #dec5b5;
+  color:#543a2d;
+  padding:6px 8px;
+  border-radius:6px;
+  font-size:13px;
+  cursor:pointer;
+}
+
+.small:hover{
+  background:#f1e1d6;
+}
+
+table{
+  width:100%;
+  border-collapse:collapse;
+  margin-top:8px;
+  font-size:14px;
+}
+
+th,td{
+  padding:8px 10px;
+  border-bottom:1px dashed #eee1da;
+  text-align:left;
+}
+
+th{
+  background:#faf6f4;
+  color:#5c4638;
+  font-weight:600;
+}
+
+.inline{
+  display:flex;
+  gap:10px;
+}
+
+hr{
+  border:none;
+  border-top:1px solid #f0e6df;
+  margin:14px 0;
+}
+
+.info{
+  margin-top:14px;
+  font-size:15px;
+  color:#3a2b26;
+}
+
+.info span{
+  font-weight:600;
+  color:var(--brown);
+}
+
+#recipesList .card{
+  margin-bottom:10px;
+}
+
+@media(max-width:980px){ .wrap{ grid-template-columns:1fr; } }
+@media(max-width:680px){
+  header{ font-size:1.2rem; padding:12px; }
+  .inline{ flex-direction:column; gap:6px; }
+  input, select, .btn, .small{ font-size:15px; width:100%; }
+  table{ display:block; overflow-x:auto; white-space:nowrap; font-size:13px; }
+  th,td{ padding:7px; }
+}
+@media(max-width:420px){ h2{ font-size:1.1rem; } label{ font-size:12px; } }
+
+/* Cards receitas */
+.recipe-card {
+  background: var(--light-gold);
+  border-radius: 12px;
+  padding: 14px 18px;
+  margin-bottom: 12px;
+  box-shadow: 0 3px 12px rgba(0,0,0,0.08);
+  transition: transform 0.15s;
+}
+
+.recipe-card:hover {
+  transform: translateY(-2px);
+}
+
+.recipe-card h3 {
+  margin: 0 0 6px 0;
+  color: var(--brown);
+  font-size: 1.15rem;
+}
+
+.recipe-card .meta {
+  font-size: 13px;
+  color: #5c4638;
+  margin-bottom: 8px;
+}
+
+.recipe-card ul {
+  margin: 0;
+  padding-left: 16px;
+}
+
+.recipe-card li {
+  margin-bottom: 4px;
+}
+
+.recipe-card .costs {
+  margin-top: 8px;
+  font-weight: 600;
+  color: var(--brown);
+  display: flex;
+  justify-content: space-between;
+}
+
+.recipe-card .actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.recipe-card .actions button {
+  font-size: 13px;
+  padding: 5px 10px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.1s;
+}
+
+.recipe-card .actions .edit-btn {
+  background: #ffd966;
+  color: #5a463a;
+}
+
+.recipe-card .actions .edit-btn:hover {
+  background: #f9d24a;
+  transform: scale(1.05);
+}
+
+.recipe-card .actions .delete-btn {
+  background: #e57373;
+  color: #fff;
+}
+
+.recipe-card .actions .delete-btn:hover {
+  background: #d64545;
+  transform: scale(1.05);
+}
+
+/* Select2 igual aos inputs (estilo da primeira página) */
+.select2-container--default .select2-selection--single {
+  background-color: #fff;
+  border: 1px solid #e7ded8;
+  border-radius: 8px;
+  height: 38px;
+  padding: 0 10px;
+  font-size: 14px;
+  color: #3a2b26;
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+}
+
+.select2-container--default .select2-selection--single .select2-selection__rendered {
+  line-height: 38px;
+}
+
+.select2-container--default .select2-selection--single .select2-selection__arrow {
+  height: 38px;
+  right: 10px;
+}
+
+.select2-container--default .select2-selection--single .select2-selection__clear {
+  height: 38px;
+}
+
+.select2-container--default .select2-dropdown {
+  border-radius: 8px;
+  border: 1px solid #e7ded8;
+  background: #fff;
+}
+
+.select2-container--default .select2-results__option--highlighted {
+  background-color: #f3e9d2;
+  color: #3a2b26;
+}
+/* Select2 igual aos inputs */
+.select2-container--default .select2-selection--single {
+    height: 38px !important;
+    border-radius: 8px;
+    border: 1px solid #e7ded8;
+    background-color: #fff;
+    display: flex;
+    align-items: center; /* centraliza o texto verticalmente */
+    padding: 0 10px !important; /* remove padding vertical extra */
+    box-sizing: border-box;
+}
+
+.select2-container--default .select2-selection--single .select2-selection__rendered {
+    line-height: 38px !important; /* força centralização vertical */
+}
+
+.select2-container--default .select2-selection--single .select2-selection__arrow {
+    height: 38px !important; /* mesma altura da caixa */
+    right: 10px !important;
+}
+
+.select2-container--default .select2-selection--single .select2-selection__clear {
+    height: 38px !important;
+}
+
+.select2-container--default .select2-dropdown {
+    border-radius: 8px;
+    border: 1px solid #e7ded8;
+    background: #fff;
+}
 
   </style>
+  <!-- jQuery necessário para Select2 -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+  <!-- Select2 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+
+  <!-- Select2 JS -->
+  <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+
 </head>
 <body>
-  <header>🍫 Precificador Pura Doçura
-    <nav><a href="produtos.html">Produtos</a></nav>
+  <header>
+      🍫 Precificador Pura Doçura
+      <nav>
+          <a href="produtos.html">
+              <button class="btn" id="btnProdutos" style="margin-left:12px;">
+              🛒 Produtos
+              </button>
+          </a>
+      </nav>
   </header>
 
   <div class="wrap">
@@ -138,7 +342,7 @@
       <div class="inline" style="margin-top:8px;align-items:end">
         <div style="flex:1">
           <label>Ingrediente</label>
-          <select id="ingredSelect"></select>
+          <select id="ingredSelect" style="height: 38px;"></select>
         </div>
         <div style="flex:1">
           <label>Quantidade</label>
@@ -189,12 +393,7 @@
 
     <!-- Painel de ingredientes -->
     <aside class="card">
-      <h2>Ingredientes</h2>
-      <div id="ingList">Carregando...</div>
-
-      <hr>
-
-      <h3>Adicionar / Editar</h3>
+      <h2>Adicionar / Editar Ingrediente</h2>
       <label>Nome</label><input id="formName" type="text" placeholder="Ex: Açúcar refinado">
       <label>Qtd. base</label><input id="formAmount" type="number" step="any" value="100">
       <label>Unidade</label>
@@ -207,10 +406,11 @@
         <button class="small" id="btnClearForm">Limpar</button>
       </div>
 
-      <p style="margin-top:10px;color:#6b4b42;font-size:13px">
-        Toque num item para editar ou excluir.
-      </p>
+      <hr>
+      <h2>Ingredientes Cadastrados</h2>
+      <div id="ingList">Carregando...</div>
     </aside>
+
   </div>
 
   <script>
@@ -496,6 +696,57 @@
     });
 
     document.getElementById("btnClearForm").addEventListener("click", clearForm);
+
+    // Inicializa Select2 para o select de ingredientes
+    function initSelect2() {
+      $('#ingredSelect').select2({
+        placeholder: "Selecione um ingrediente",
+        allowClear: true,
+        width: '100%' // garante que ocupe todo o espaço do container
+      });
+    }
+
+    // Chame após renderizar os ingredientes
+    function renderCatalog() {
+      const sel = document.getElementById("ingredSelect");
+      sel.innerHTML = "";
+      const listDiv = document.getElementById("ingList");
+      listDiv.innerHTML = "";
+
+      catalog.forEach(i => {
+        const opt = document.createElement("option");
+        opt.value = i.id;
+        opt.textContent = i.nome;
+        sel.appendChild(opt);
+
+        const div = document.createElement("div");
+        div.style.display = "flex";
+        div.style.justifyContent = "space-between";
+        div.style.alignItems = "center";
+        div.style.marginBottom = "8px";
+        div.innerHTML = `<div>${i.nome} <small style="color:#7c5c47">(${i.amount}${i.unit} → R$ ${Number(i.price).toFixed(2)})</small></div>`;
+
+        const right = document.createElement("div");
+        right.style.display = "flex";
+        right.style.gap = "6px";
+        const btnE = document.createElement("button");
+        btnE.textContent = "Editar";
+        btnE.className = "small";
+        btnE.onclick = () => loadIntoForm(i);
+        const btnD = document.createElement("button");
+        btnD.textContent = "Excluir";
+        btnD.className = "small";
+        btnD.onclick = () => removeIngredient(i.id);
+        right.appendChild(btnE);
+        right.appendChild(btnD);
+        div.appendChild(right);
+        listDiv.appendChild(div);
+      });
+
+      // Inicializa/Atualiza Select2 após preencher o select
+      initSelect2();
+    }
+
 
     // =====================
     // INICIALIZAÇÃO
